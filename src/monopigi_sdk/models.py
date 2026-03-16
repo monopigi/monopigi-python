@@ -1,6 +1,32 @@
 """Pydantic response models for the Monopigi API."""
 
+from enum import StrEnum
+
 from pydantic import BaseModel
+
+
+class SourceStatus(StrEnum):
+    """Status of a data source."""
+
+    ACTIVE = "active"
+    UNAVAILABLE = "unavailable"
+    PLANNED = "planned"
+
+
+class Tier(StrEnum):
+    """API subscription tier."""
+
+    FREE = "free"
+    PRO = "pro"
+    ENTERPRISE = "enterprise"
+
+
+class OutputFormat(StrEnum):
+    """CLI output format."""
+
+    TABLE = "table"
+    JSON = "json"
+    CSV = "csv"
 
 
 class Source(BaseModel):
@@ -8,7 +34,7 @@ class Source(BaseModel):
 
     name: str
     label: str
-    status: str
+    status: SourceStatus
     description: str
 
 
@@ -67,7 +93,7 @@ class StatsResponse(BaseModel):
 class UsageResponse(BaseModel):
     """Response from /v1/usage."""
 
-    tier: str
+    tier: Tier
     daily_quota: int
     daily_used: int
     daily_remaining: int
