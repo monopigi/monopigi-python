@@ -3,6 +3,7 @@
 from monopigi_sdk.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError
 from monopigi_sdk.models import (
     Document,
+    DocumentsResponse,
     OutputFormat,
     SearchResponse,
     Source,
@@ -87,3 +88,61 @@ def test_usage_response_accepts_string_tier() -> None:
     resp = UsageResponse(tier="free", daily_quota=10, daily_used=3, daily_remaining=7, reset_at="2026-03-17T00:00:00Z")
     assert resp.tier == Tier.FREE
     assert resp.daily_remaining == 7
+
+
+# --- DataFrame conversion tests ---
+
+_SAMPLE_DOCS = [
+    {
+        "source_id": "ted-123",
+        "source": "ted",
+        "title": "Hospital procurement",
+        "doc_type": "contract",
+    },
+    {
+        "source_id": "ted-456",
+        "source": "ted",
+        "title": "Medical supplies",
+        "doc_type": "notice",
+    },
+]
+
+
+def test_search_response_to_polars() -> None:
+    import polars as pl
+
+    resp = SearchResponse(query="hospital", results=_SAMPLE_DOCS, total=2, limit=100, offset=0)
+    df = resp.to_polars()
+    assert isinstance(df, pl.DataFrame)
+    assert len(df) == 2
+    assert "source_id" in df.columns
+
+
+def test_documents_response_to_polars() -> None:
+    import polars as pl
+
+    resp = DocumentsResponse(source="ted", documents=_SAMPLE_DOCS, total=2, limit=100, offset=0)
+    df = resp.to_polars()
+    assert isinstance(df, pl.DataFrame)
+    assert len(df) == 2
+    assert "source_id" in df.columns
+
+
+def test_search_response_to_pandas() -> None:
+    import pandas as pd
+
+    resp = SearchResponse(query="hospital", results=_SAMPLE_DOCS, total=2, limit=100, offset=0)
+    df = resp.to_pandas()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 2
+    assert "source_id" in df.columns
+
+
+def test_documents_response_to_pandas() -> None:
+    import pandas as pd
+
+    resp = DocumentsResponse(source="ted", documents=_SAMPLE_DOCS, total=2, limit=100, offset=0)
+    df = resp.to_pandas()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 2
+    assert "source_id" in df.columns

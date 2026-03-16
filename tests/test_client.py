@@ -8,7 +8,7 @@ from pytest_httpx import HTTPXMock
 
 @pytest.fixture
 def client(api_token, base_url):
-    return MonopigiClient(token=api_token, base_url=base_url)
+    return MonopigiClient(token=api_token, base_url=base_url, max_retries=0)
 
 
 def test_client_sets_auth_header(client):
@@ -119,3 +119,40 @@ async def test_async_sources(api_token: str, base_url: str, httpx_mock: HTTPXMoc
         sources = await client.sources()
         assert len(sources) == 1
         assert sources[0].name == "ted"
+
+
+# --- Rate-limit retry tests ---
+
+
+def test_429_auto_retries(api_token: str, base_url: str, httpx_mock: HTTPXMock, monkeypatch) -> None:
+    """Client retries on 429 and succeeds when the next response is 200."""
+    monkeypatch.setattr("monopigi_sdk.client.time.sleep", lambda _: None)
+    # First response: 429, second response: 200
+    httpx_mock.add_response(
+        status_code=429,
+        json={"detail": "Rate limit exceeded"},
+        headers={"X-RateLimit-Reset": "0"},
+    )
+    httpx_mock.add_response(
+        json=[{"name": "ted", "label": "TED", "status": "active", "description": "EU procurement"}],
+    )
+    client = MonopigiClient(token=api_token, base_url=base_url, max_retries=3)
+    sources = client.sources()
+    assert len(sources) == 1
+    assert len(httpx_mock.get_requests()) == 2
+
+
+def test_429_exhausts_retries(api_token: str, base_url: str, httpx_mock: HTTPXMock, monkeypatch) -> None:
+    """Client raises RateLimitError after exhausting all retries."""
+    monkeypatch.setattr("monopigi_sdk.client.time.sleep", lambda _: None)
+    # 4 responses: all 429 (1 initial + 3 retries)
+    for _ in range(4):
+        httpx_mock.add_response(
+            status_code=429,
+            json={"detail": "Rate limit exceeded"},
+            headers={"X-RateLimit-Reset": "0"},
+        )
+    client = MonopigiClient(token=api_token, base_url=base_url, max_retries=3)
+    with pytest.raises(RateLimitError):
+        client.sources()
+    assert len(httpx_mock.get_requests()) == 4

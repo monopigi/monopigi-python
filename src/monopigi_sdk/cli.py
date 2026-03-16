@@ -192,3 +192,24 @@ def usage() -> None:
     except MonopigiError as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1) from e
+
+
+@app.command()
+def export(
+    source: str = typer.Argument(..., help="Source name"),
+    path: str = typer.Argument(..., help="Output file path"),
+    fmt: str = typer.Option("json", "--format", "-f", help="json, csv, parquet"),
+    since: str | None = typer.Option(None, "--since"),
+    limit: int | None = typer.Option(None, "--limit", "-l"),
+) -> None:
+    """Export documents from a source to a file."""
+    try:
+        with _get_client() as client:
+            count = client.export(source, path, format=fmt, since=since, limit=limit)
+            console.print(f"[green]Exported {count} documents to {path}[/green]")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
