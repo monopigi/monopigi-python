@@ -1,0 +1,33 @@
+[project]
+name = "monopigi-sdk"
+version = "0.1.0"
+description = "Python SDK and CLI for the Monopigi Greek Government Data API"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{name = "Monopigi", email = "info@monopigi.com"}]
+keywords = ["greek", "government", "data", "api", "procurement", "open-data"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+    "typer>=0.15",
+    "rich>=13.0",
+]
+
+[project.scripts]
+monopigi = "monopigi_sdk.cli:app"
+
+[project.urls]
+Homepage = "https://monopigi.com"
+Documentation = "https://api.monopigi.com/docs"
+Repository = "https://github.com/morrieinmaas/monopigi"
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
