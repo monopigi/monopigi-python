@@ -1,7 +1,7 @@
 """Tests for Monopigi API client."""
 
 import pytest
-from monopigi_sdk.client import MonopigiClient
+from monopigi_sdk.client import AsyncMonopigiClient, MonopigiClient
 from monopigi_sdk.exceptions import AuthError, NotFoundError, RateLimitError
 from pytest_httpx import HTTPXMock
 
@@ -83,3 +83,39 @@ def test_404_raises_not_found_error(client, httpx_mock: HTTPXMock):
     httpx_mock.add_response(status_code=404, json={"detail": "Unknown source: foo"})
     with pytest.raises(NotFoundError):
         client.documents("foo")
+
+
+def test_sync_context_manager(api_token: str, base_url: str, httpx_mock: HTTPXMock) -> None:
+    """Sync client works as a context manager and closes the connection."""
+    httpx_mock.add_response(
+        json={"query": "test", "results": [], "total": 0, "limit": 10, "offset": 0},
+    )
+    with MonopigiClient(token=api_token, base_url=base_url) as client:
+        resp = client.search("test", limit=10)
+        assert resp.total == 0
+    # After exiting, the underlying httpx client should be closed
+    assert client._client.is_closed
+
+
+@pytest.mark.asyncio
+async def test_async_context_manager(api_token: str, base_url: str, httpx_mock: HTTPXMock) -> None:
+    """Async client works as an async context manager and closes the connection."""
+    httpx_mock.add_response(
+        json={"query": "test", "results": [], "total": 0, "limit": 10, "offset": 0},
+    )
+    async with AsyncMonopigiClient(token=api_token, base_url=base_url) as client:
+        resp = await client.search("test", limit=10)
+        assert resp.total == 0
+    assert client._client.is_closed
+
+
+@pytest.mark.asyncio
+async def test_async_sources(api_token: str, base_url: str, httpx_mock: HTTPXMock) -> None:
+    """Async client can fetch sources."""
+    httpx_mock.add_response(
+        json=[{"name": "ted", "label": "TED", "status": "active", "description": "EU procurement"}],
+    )
+    async with AsyncMonopigiClient(token=api_token, base_url=base_url) as client:
+        sources = await client.sources()
+        assert len(sources) == 1
+        assert sources[0].name == "ted"
