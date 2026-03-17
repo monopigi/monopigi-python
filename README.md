@@ -444,5 +444,4 @@ Get your API key at [monopigi.com](https://monopigi.com).
 ## Links
 
 - Website: [monopigi.com](https://monopigi.com)
-- API Docs: [api.monopigi.com/docs](https://api.monopigi.com/docs)
 - Contact: info@monopigi.com
