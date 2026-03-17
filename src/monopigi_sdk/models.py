@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    import pandas
     import polars
 
 
@@ -84,12 +83,6 @@ class SearchResponse(BaseModel):
 
         return pl.DataFrame([doc.model_dump() for doc in self.results])
 
-    def to_pandas(self) -> pandas.DataFrame:
-        """Convert results to a Pandas DataFrame."""
-        import pandas as pd
-
-        return pd.DataFrame([doc.model_dump() for doc in self.results])
-
 
 class DocumentsResponse(BaseModel):
     """Response from /v1/{source}/documents."""
@@ -106,12 +99,6 @@ class DocumentsResponse(BaseModel):
         import polars as pl
 
         return pl.DataFrame([doc.model_dump() for doc in self.documents])
-
-    def to_pandas(self) -> pandas.DataFrame:
-        """Convert results to a Pandas DataFrame."""
-        import pandas as pd
-
-        return pd.DataFrame([doc.model_dump() for doc in self.documents])
 
 
 class SourceStats(BaseModel):

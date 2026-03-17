@@ -10,8 +10,8 @@ One API. 31M+ government decisions. 18K EU procurement notices. 172 energy permi
 # Base package
 pip install monopigi-sdk
 
-# With DataFrame support (Polars + Pandas)
-pip install monopigi-sdk[dataframe]
+# With Polars DataFrame support
+pip install monopigi-sdk[df]
 
 # With interactive TUI browser
 pip install monopigi-sdk[fuzzy]
@@ -149,14 +149,11 @@ for doc in client.documents_iter("ted", since="2026-01-01"):
 
 ### DataFrame Conversion
 
-Convert any response to Polars or Pandas (requires `[dataframe]` extra):
+Convert any response to a Polars DataFrame (requires `[df]` extra):
 
 ```python
-# Polars DataFrame
 df = client.search("hospital").to_polars()
-
-# Pandas DataFrame
-df = client.documents("ted", limit=500).to_pandas()
+df = client.documents("ted", limit=500).to_polars()
 ```
 
 ### Bulk Export
