@@ -12,6 +12,12 @@ if TYPE_CHECKING:
     import polars
 
 
+class Country(StrEnum):
+    """ISO 3166-1 alpha-2 country codes for supported markets."""
+
+    GR = "GR"
+
+
 class SourceStatus(StrEnum):
     """Status of a data source."""
 
@@ -44,6 +50,7 @@ class Source(BaseModel):
     label: str
     status: SourceStatus
     description: str
+    country: Country = Country.GR
 
 
 class Document(BaseModel):
@@ -51,6 +58,7 @@ class Document(BaseModel):
 
     source_id: str
     source: str
+    country: Country = Country.GR
     title: str | None = None
     doc_type: str | None = None
     doc_category: str | None = None
