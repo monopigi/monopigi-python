@@ -108,21 +108,21 @@ _SAMPLE_DOCS = [
 ]
 
 
-def test_search_response_to_polars() -> None:
+def test_search_response_to_df() -> None:
     import polars as pl
 
     resp = SearchResponse(query="hospital", results=_SAMPLE_DOCS, total=2, limit=100, offset=0)
-    df = resp.to_polars()
+    df = resp.to_df()
     assert isinstance(df, pl.DataFrame)
     assert len(df) == 2
     assert "source_id" in df.columns
 
 
-def test_documents_response_to_polars() -> None:
+def test_documents_response_to_df() -> None:
     import polars as pl
 
     resp = DocumentsResponse(source="ted", documents=_SAMPLE_DOCS, total=2, limit=100, offset=0)
-    df = resp.to_polars()
+    df = resp.to_df()
     assert isinstance(df, pl.DataFrame)
     assert len(df) == 2
     assert "source_id" in df.columns

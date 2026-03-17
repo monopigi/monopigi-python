@@ -77,7 +77,7 @@ class SearchResponse(BaseModel):
     offset: int
     message: str | None = None
 
-    def to_polars(self) -> polars.DataFrame:
+    def to_df(self) -> polars.DataFrame:
         """Convert results to a Polars DataFrame."""
         import polars as pl
 
@@ -94,7 +94,7 @@ class DocumentsResponse(BaseModel):
     offset: int
     message: str | None = None
 
-    def to_polars(self) -> polars.DataFrame:
+    def to_df(self) -> polars.DataFrame:
         """Convert results to a Polars DataFrame."""
         import polars as pl
 

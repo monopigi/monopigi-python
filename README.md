@@ -152,8 +152,8 @@ for doc in client.documents_iter("ted", since="2026-01-01"):
 Convert any response to a Polars DataFrame (requires `[df]` extra):
 
 ```python
-df = client.search("hospital").to_polars()
-df = client.documents("ted", limit=500).to_polars()
+df = client.search("hospital").to_df()
+df = client.documents("ted", limit=500).to_df()
 ```
 
 ### Bulk Export
