@@ -2,7 +2,7 @@
 
 Python SDK and CLI for the **Monopigi Greek Government Data API**.
 
-One API. 31M+ government decisions. 18K EU procurement notices. 172 energy permit layers. 84 open datasets. Normalized JSON. One bearer token.
+One API. 31M+ government decisions. 18K+ EU procurement notices. 10K+ energy permits. Millions of open data records. Normalized JSON. One bearer token.
 
 ## Installation
 
@@ -58,9 +58,9 @@ monopigi search "hospital procurement"
 |--------|-----------------|--------|
 | **Diavgeia** | Government spending decisions, contracts, financial data | 31M+ decisions |
 | **TED (EU)** | EU public procurement notices for Greece (EL/EN) | 18K+ notices |
-| **RAE Energy** | Energy permits — wind, solar, hydro with GeoJSON | 172 WFS layers |
-| **data.gov.gr** | National open data — health, economy, crime, energy | 84 datasets |
-| **ELSTAT** | Statistical time series — GDP, unemployment, trade | 28 series |
+| **RAE Energy** | Energy permits — wind, solar, hydro with GeoJSON | 10K+ permits |
+| **data.gov.gr** | National open data — health, economy, crime, energy | 84 datasets, millions of records |
+| **ELSTAT** | Statistical time series — GDP, unemployment, trade | 28 indicators, decades of data |
 | **Mitos** | Government org registry — names, addresses, VAT | 2,886 orgs |
 
 ---
@@ -431,7 +431,7 @@ monopigi stats | jq '.sources | to_entries | sort_by(-.value.documents) | .[].ke
 | Tier | Price | Daily Queries |
 |------|-------|---------------|
 | Free | EUR 0 | 5 |
-| Pro | EUR 299/mo | 10,000 |
+| Pro | EUR 299/mo | 5,000 |
 | Enterprise | Custom | Unlimited |
 
 Get your API key at [monopigi.com](https://monopigi.com).
