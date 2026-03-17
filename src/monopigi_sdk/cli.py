@@ -70,7 +70,13 @@ def _output_docs(docs: list[Document], fmt: OutputFormat, fields: str | None, ti
             print(json.dumps(_filter_fields(doc.model_dump(), fields), ensure_ascii=False))
     elif fmt == OutputFormat.JSON:
         data = [_filter_fields(doc.model_dump(), fields) for doc in docs]
-        print(json.dumps(data, indent=2, ensure_ascii=False))
+        raw = json.dumps(data, indent=2, ensure_ascii=False)
+        if sys.stdout.isatty():
+            from rich.json import JSON as RichJSON
+
+            console.print(RichJSON(raw))
+        else:
+            print(raw)
     elif fmt == OutputFormat.CSV:
         if docs:
             filtered = [_filter_fields(doc.model_dump(), fields) for doc in docs]
@@ -213,7 +219,8 @@ def stats() -> None:
         with _get_client() as client:
             resp = client.stats()
             if _is_pipe():
-                print(json.dumps(resp.model_dump(), indent=2, ensure_ascii=False))
+                raw = json.dumps(resp.model_dump(), indent=2, ensure_ascii=False)
+                print(raw)
             else:
                 console.print(f"\n[bold]Total documents:[/bold] {resp.total_documents:,}\n")
                 if resp.sources:
@@ -242,7 +249,8 @@ def usage() -> None:
         with _get_client() as client:
             resp = client.usage()
             if _is_pipe():
-                print(json.dumps(resp.model_dump(), ensure_ascii=False))
+                raw = json.dumps(resp.model_dump(), ensure_ascii=False)
+                print(raw)
             else:
                 console.print(f"\n[bold]Tier:[/bold] {resp.tier}")
                 console.print(f"[bold]Daily quota:[/bold] {resp.daily_quota}")
@@ -276,3 +284,196 @@ def export(
     except (MonopigiError, ValueError) as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1) from e
+
+
+@app.command()
+def watch(
+    query: str = typer.Argument(..., help="Search query"),
+    interval: int = typer.Option(60, "--interval", "-i", help="Poll interval in seconds"),
+    fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
+) -> None:
+    """Watch for new results in real-time. Ctrl+C to stop.
+
+    Examples:
+        monopigi watch "hospital procurement" --interval 30
+        monopigi watch "tender" -i 10 --format jsonl | tee new_tenders.jsonl
+    """
+    import time
+
+    seen_ids: set[str] = set()
+    console.print(f"[dim]Watching for '{query}' every {interval}s... (Ctrl+C to stop)[/dim]")
+    try:
+        with _get_client(cache=False) as client:
+            while True:
+                resp = client.search(query, limit=100)
+                new_docs = [doc for doc in resp.results if doc.source_id not in seen_ids]
+                for doc in new_docs:
+                    seen_ids.add(doc.source_id)
+                if new_docs:
+                    _output_docs(
+                        new_docs,
+                        fmt,
+                        fields=None,
+                        title=f"[{time.strftime('%H:%M:%S')}] {len(new_docs)} new",
+                    )
+                time.sleep(interval)
+    except KeyboardInterrupt:
+        console.print(f"\n[dim]Stopped. Saw {len(seen_ids)} unique documents.[/dim]")
+
+
+@app.command()
+def diff(
+    source: str = typer.Argument(..., help="Source name"),
+    since: str | None = typer.Option(None, "--since", help="ISO date (default: last check)"),
+    fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
+) -> None:
+    """Show new documents since last check.
+
+    Examples:
+        monopigi diff ted
+        monopigi diff diavgeia --since 2026-03-15
+    """
+    import time
+
+    last_check_file = DEFAULT_CONFIG_PATH.parent / "last_check.json"
+
+    if not since and last_check_file.exists():
+        data = json.loads(last_check_file.read_text())
+        since = data.get(source)
+
+    try:
+        with _get_client() as client:
+            resp = client.documents(source, limit=100, since=since)
+            if resp.documents:
+                _output_docs(
+                    resp.documents,
+                    fmt,
+                    fields=None,
+                    title=f"{source} — {len(resp.documents)} new since {since or 'beginning'}",
+                )
+            else:
+                console.print(f"[dim]No new documents in {source} since {since or 'beginning'}[/dim]")
+
+        # Save current timestamp
+        last_check_file.parent.mkdir(parents=True, exist_ok=True)
+        existing = json.loads(last_check_file.read_text()) if last_check_file.exists() else {}
+        existing[source] = time.strftime("%Y-%m-%d")
+        last_check_file.write_text(json.dumps(existing))
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+# -- Config sub-commands -------------------------------------------------------
+
+config_app = typer.Typer(help="Manage CLI configuration.")
+app.add_typer(config_app, name="config")
+
+VALID_CONFIG_KEYS = {"base_url", "default_format", "default_source", "cache_ttl"}
+
+
+@config_app.command("set")
+def config_set(key: str = typer.Argument(...), value: str = typer.Argument(...)) -> None:
+    """Set a config value. Keys: base_url, default_format, default_source, cache_ttl"""
+    if key not in VALID_CONFIG_KEYS:
+        console.print(f"[red]Unknown key: {key}[/red]. Valid: {', '.join(sorted(VALID_CONFIG_KEYS))}")
+        raise typer.Exit(1)
+    config_file = DEFAULT_CONFIG_PATH.parent / "settings.json"
+    config_file.parent.mkdir(parents=True, exist_ok=True)
+    existing = json.loads(config_file.read_text()) if config_file.exists() else {}
+    existing[key] = value
+    config_file.write_text(json.dumps(existing, indent=2))
+    console.print(f"[green]{key}[/green] = {value}")
+
+
+@config_app.command("get")
+def config_get(key: str = typer.Argument(...)) -> None:
+    """Get a config value."""
+    config_file = DEFAULT_CONFIG_PATH.parent / "settings.json"
+    if not config_file.exists():
+        console.print("[dim]No settings configured.[/dim]")
+        return
+    settings = json.loads(config_file.read_text())
+    value = settings.get(key, "[dim]not set[/dim]")
+    console.print(f"{key} = {value}")
+
+
+@config_app.command("list")
+def config_list() -> None:
+    """Show all config values."""
+    config_file = DEFAULT_CONFIG_PATH.parent / "settings.json"
+    auth_cfg = load_config(config_path=DEFAULT_CONFIG_PATH)
+    console.print(
+        f"[bold]token:[/bold] {auth_cfg.token[:16]}..." if auth_cfg.token else "[bold]token:[/bold] [dim]not set[/dim]"
+    )
+    console.print(f"[bold]base_url:[/bold] {auth_cfg.base_url}")
+    if config_file.exists():
+        settings = json.loads(config_file.read_text())
+        for k, v in settings.items():
+            console.print(f"[bold]{k}:[/bold] {v}")
+
+
+@app.command()
+def browse(
+    source: str = typer.Argument("", help="Source name (optional — searches all if empty)"),
+    query: str = typer.Option("", "--query", "-q", help="Pre-filter query"),
+    limit: int = typer.Option(100, "--limit", "-l", help="Max documents to load"),
+) -> None:
+    """Interactive document browser with live filtering. Requires: pip install monopigi-sdk[fuzzy]
+
+    Examples:
+        monopigi browse ted
+        monopigi browse --query "hospital" --limit 200
+    """
+    try:
+        from monopigi_sdk.browse import browse_documents, check_textual
+
+        check_textual()
+    except ImportError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1) from e
+
+    try:
+        with _get_client(cache=True) as client:
+            if source:
+                resp = client.documents(source, limit=limit)
+                docs = [doc.model_dump() for doc in resp.documents]
+            elif query:
+                resp = client.search(query, limit=limit)
+                docs = [doc.model_dump() for doc in resp.results]
+            else:
+                resp = client.search("", limit=limit)
+                docs = [doc.model_dump() for doc in resp.results]
+            browse_documents(docs, source=source)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def pipe(
+    limit: int = typer.Option(3, "--limit", "-l", help="Max results per query"),
+) -> None:
+    """Read queries from stdin, search each, output JSONL. Great for data enrichment.
+
+    Examples:
+        echo "hospital" | monopigi pipe
+        cat company_names.txt | monopigi pipe --limit 5
+        monopigi documents ted -f jsonl | jq -r '.title' | monopigi pipe
+    """
+    from monopigi_sdk.pipe import pipe_search
+
+    try:
+        with _get_client() as client:
+            pipe_search(client, limit=limit)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def completions() -> None:
+    """Show how to install shell tab completions."""
+    from monopigi_sdk.completions import get_completion_instructions
+
+    console.print(get_completion_instructions())

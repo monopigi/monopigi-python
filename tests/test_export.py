@@ -14,7 +14,18 @@ def _doc(source_id: str) -> dict:
 
 
 def _mock_single_page(httpx_mock: HTTPXMock) -> None:
-    """Mock a single page of 2 documents with total=2."""
+    """Mock a count query (limit=1) followed by a single page of 2 documents."""
+    # First call: count query with limit=1
+    httpx_mock.add_response(
+        json={
+            "source": "ted",
+            "documents": [_doc("1")],
+            "total": 2,
+            "limit": 1,
+            "offset": 0,
+        },
+    )
+    # Second call: full page fetch
     httpx_mock.add_response(
         json={
             "source": "ted",

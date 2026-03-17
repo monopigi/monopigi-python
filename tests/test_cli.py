@@ -117,3 +117,29 @@ def test_search_fields_flag(tmp_path: Path) -> None:
     assert "title" in result.stdout
     # Should NOT include quality_score since we filtered to source,title
     assert "quality_score" not in result.stdout
+
+
+def test_config_set_and_get(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.toml"
+    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+        result = runner.invoke(app, ["config", "set", "cache_ttl", "600"])
+    assert result.exit_code == 0
+    assert "cache_ttl" in result.stdout
+
+
+def test_config_set_invalid_key(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.toml"
+    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+        result = runner.invoke(app, ["config", "set", "invalid_key", "value"])
+    assert result.exit_code != 0
+
+
+def test_config_list(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.toml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text('token = "mp_live_test"\nbase_url = "https://api.monopigi.com"\n')
+    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+        result = runner.invoke(app, ["config", "list"])
+    assert result.exit_code == 0
+    assert "token" in result.stdout
+    assert "base_url" in result.stdout

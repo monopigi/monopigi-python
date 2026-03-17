@@ -22,7 +22,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dataframe = ["polars>=1.0", "pandas>=2.0"]
-all = ["polars>=1.0", "pandas>=2.0"]
+fuzzy = ["textual>=3.0"]
+all = ["polars>=1.0", "pandas>=2.0", "textual>=3.0"]
 
 [project.scripts]
 monopigi = "monopigi_sdk.cli:app"

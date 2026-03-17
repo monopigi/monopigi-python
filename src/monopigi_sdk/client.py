@@ -191,7 +191,15 @@ class MonopigiClient:
 
         Formats: json, csv, parquet (requires polars)
         """
-        docs = list(self.documents_iter(source, since=since))
+        from monopigi_sdk.progress import iter_with_progress
+
+        # First get total count
+        resp = self.documents(source, limit=1, since=since)
+        total = resp.total
+
+        # Then iterate with progress
+        raw_iter = self.documents_iter(source, since=since)
+        docs = list(iter_with_progress(raw_iter, total=total, description=f"Exporting {source}"))
         if limit:
             docs = docs[:limit]
 
