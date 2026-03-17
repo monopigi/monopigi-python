@@ -31,7 +31,6 @@ monopigi = "monopigi_sdk.cli:app"
 [project.urls]
 Homepage = "https://monopigi.com"
 Documentation = "https://api.monopigi.com/docs"
-Repository = "https://github.com/morrieinmaas/monopigi"
 
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
