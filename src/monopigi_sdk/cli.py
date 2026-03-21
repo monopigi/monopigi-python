@@ -399,7 +399,14 @@ VALID_CONFIG_KEYS = {"base_url", "default_format", "default_source", "cache_ttl"
 
 @config_app.command("set")
 def config_set(ctx: typer.Context, key: str | None = typer.Argument(None), value: str | None = typer.Argument(None)) -> None:
-    """Set a config value. Keys: base_url, default_format, default_source, cache_ttl"""
+    """Set a config value.
+
+    Keys:
+        base_url         API base URL (default: https://api.monopigi.com)
+        default_format   Output format: table, json, jsonl, csv (default: table)
+        default_source   Default source for documents/diff/export commands
+        cache_ttl        Cache TTL in seconds (default: 300)
+    """
     key = _require_arg(ctx, key)
     value = _require_arg(ctx, value)
     if key not in VALID_CONFIG_KEYS:

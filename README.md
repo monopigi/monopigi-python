@@ -255,7 +255,43 @@ monopigi auth status
 monopigi auth logout
 ```
 
-Token is stored in `~/.monopigi/config.toml`.
+Token is stored in `~/.monopigi/config.toml`:
+
+```toml
+token = "mp_live_..."
+base_url = "https://api.monopigi.com"
+```
+
+### Configuration
+
+CLI settings are stored separately in `~/.monopigi/settings.json`:
+
+```bash
+# Set API base URL (for self-hosted or development)
+monopigi config set base_url http://localhost:8000
+
+# Set default output format (table, json, jsonl, csv)
+monopigi config set default_format json
+
+# Set default source for documents/diff/export commands
+monopigi config set default_source ted
+
+# Set cache TTL in seconds (default: 300)
+monopigi config set cache_ttl 600
+
+# Get a config value
+monopigi config get cache_ttl
+
+# List all config (auth + settings)
+monopigi config list
+```
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `base_url` | `https://api.monopigi.com` | API base URL |
+| `default_format` | `table` | Output format: `table`, `json`, `jsonl`, `csv` |
+| `default_source` | — | Default source for `documents`, `diff`, `export` |
+| `cache_ttl` | `300` | Local cache TTL in seconds |
 
 ### Searching
 
