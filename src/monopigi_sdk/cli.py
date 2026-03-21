@@ -35,6 +35,14 @@ app.add_typer(auth_app, name="auth")
 console = Console()
 
 
+def _require_arg(ctx: typer.Context, value: str | None) -> str:
+    """Show help and exit if a required argument is missing."""
+    if value is None:
+        console.print(ctx.get_help())
+        raise typer.Exit(0)
+    return value
+
+
 def _is_pipe() -> bool:
     """Check if stdout is being piped (not a TTY)."""
     return not sys.stdout.isatty()
@@ -107,8 +115,9 @@ def _output_docs(docs: list[Document], fmt: OutputFormat, fields: str | None, ti
 
 
 @auth_app.command("login")
-def auth_login(token: str = typer.Argument(..., help="Your Monopigi API token (mp_live_...)")) -> None:
+def auth_login(ctx: typer.Context, token: str | None = typer.Argument(None, help="Your Monopigi API token (mp_live_...)")) -> None:
     """Save your API token."""
+    token = _require_arg(ctx, token)
     save_config(token, config_path=DEFAULT_CONFIG_PATH)
     console.print(f"[green]Token saved.[/green] Authenticated as {token[:16]}...")
 
@@ -159,7 +168,8 @@ def sources() -> None:
 
 @app.command()
 def search(
-    query: str = typer.Argument(..., help="Search query"),
+    ctx: typer.Context,
+    query: str | None = typer.Argument(None, help="Search query"),
     limit: int = typer.Option(10, "--limit", "-l", help="Max results"),
     fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
     fields: str | None = typer.Option(None, "--fields", help="Comma-separated fields to include"),
@@ -176,6 +186,7 @@ def search(
         monopigi search "Athens" --count
         monopigi search "hospital" --cache | grep diavgeia
     """
+    query = _require_arg(ctx, query)
     try:
         with _get_client(cache=cache) as client:
             resp = client.search(query, limit=limit)
@@ -190,7 +201,8 @@ def search(
 
 @app.command()
 def documents(
-    source: str = typer.Argument(..., help="Source name (e.g. ted, diavgeia)"),
+    ctx: typer.Context,
+    source: str | None = typer.Argument(None, help="Source name (e.g. ted, diavgeia)"),
     limit: int = typer.Option(10, "--limit", "-l"),
     since: str | None = typer.Option(None, "--since", help="ISO date, e.g. 2026-01-01"),
     fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
@@ -205,6 +217,7 @@ def documents(
         monopigi documents diavgeia --since 2026-01-01 --fields title,source_url --format csv
         monopigi documents ted --count
     """
+    source = _require_arg(ctx, source)
     try:
         with _get_client(cache=cache) as client:
             resp = client.documents(source, limit=limit, since=since)
@@ -269,8 +282,9 @@ def usage() -> None:
 
 @app.command()
 def export(
-    source: str = typer.Argument(..., help="Source name"),
-    path: str = typer.Argument(..., help="Output file path"),
+    ctx: typer.Context,
+    source: str | None = typer.Argument(None, help="Source name"),
+    path: str | None = typer.Argument(None, help="Output file path"),
     fmt: str = typer.Option("json", "--format", "-f", help="json, csv, parquet"),
     since: str | None = typer.Option(None, "--since"),
     limit: int | None = typer.Option(None, "--limit", "-l"),
@@ -284,6 +298,8 @@ def export(
     """
     try:
         with _get_client() as client:
+            source = _require_arg(ctx, source)
+            path = _require_arg(ctx, path)
             count = client.export(source, path, format=fmt, since=since, limit=limit)
             console.print(f"[green]Exported {count} documents to {path}[/green]")
     except (MonopigiError, ValueError) as e:
@@ -293,7 +309,8 @@ def export(
 
 @app.command()
 def watch(
-    query: str = typer.Argument(..., help="Search query"),
+    ctx: typer.Context,
+    query: str | None = typer.Argument(None, help="Search query"),
     interval: int = typer.Option(60, "--interval", "-i", help="Poll interval in seconds"),
     fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
 ) -> None:
@@ -305,6 +322,7 @@ def watch(
     """
     import time
 
+    query = _require_arg(ctx, query)
     seen_ids: set[str] = set()
     console.print(f"[dim]Watching for '{query}' every {interval}s... (Ctrl+C to stop)[/dim]")
     try:
@@ -328,7 +346,8 @@ def watch(
 
 @app.command()
 def diff(
-    source: str = typer.Argument(..., help="Source name"),
+    ctx: typer.Context,
+    source: str | None = typer.Argument(None, help="Source name"),
     since: str | None = typer.Option(None, "--since", help="ISO date (default: last check)"),
     fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
 ) -> None:
@@ -338,6 +357,7 @@ def diff(
         monopigi diff ted
         monopigi diff diavgeia --since 2026-03-15
     """
+    source = _require_arg(ctx, source)
     import time
 
     last_check_file = DEFAULT_CONFIG_PATH.parent / "last_check.json"
@@ -371,15 +391,17 @@ def diff(
 
 # -- Config sub-commands -------------------------------------------------------
 
-config_app = typer.Typer(help="Manage CLI configuration.")
+config_app = typer.Typer(help="Manage CLI configuration.", no_args_is_help=True)
 app.add_typer(config_app, name="config")
 
 VALID_CONFIG_KEYS = {"base_url", "default_format", "default_source", "cache_ttl"}
 
 
 @config_app.command("set")
-def config_set(key: str = typer.Argument(...), value: str = typer.Argument(...)) -> None:
+def config_set(ctx: typer.Context, key: str | None = typer.Argument(None), value: str | None = typer.Argument(None)) -> None:
     """Set a config value. Keys: base_url, default_format, default_source, cache_ttl"""
+    key = _require_arg(ctx, key)
+    value = _require_arg(ctx, value)
     if key not in VALID_CONFIG_KEYS:
         console.print(f"[red]Unknown key: {key}[/red]. Valid: {', '.join(sorted(VALID_CONFIG_KEYS))}")
         raise typer.Exit(1)
@@ -392,8 +414,9 @@ def config_set(key: str = typer.Argument(...), value: str = typer.Argument(...))
 
 
 @config_app.command("get")
-def config_get(key: str = typer.Argument(...)) -> None:
+def config_get(ctx: typer.Context, key: str | None = typer.Argument(None)) -> None:
     """Get a config value."""
+    key = _require_arg(ctx, key)
     config_file = DEFAULT_CONFIG_PATH.parent / "settings.json"
     if not config_file.exists():
         console.print("[dim]No settings configured.[/dim]")

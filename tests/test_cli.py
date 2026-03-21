@@ -20,7 +20,8 @@ def test_auth_login(tmp_path: Path) -> None:
 
 def test_auth_login_no_token() -> None:
     result = runner.invoke(app, ["auth", "login"])
-    assert result.exit_code != 0
+    assert result.exit_code == 0  # shows help instead of error
+    assert "TOKEN" in result.output
 
 
 def test_auth_status_no_config(tmp_path: Path) -> None:
