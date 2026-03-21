@@ -191,6 +191,7 @@ def sources() -> None:
 def search(
     ctx: typer.Context,
     query: str | None = typer.Argument(None, help="Search query"),
+    source: str | None = typer.Option(None, "--source", "-s", help="Filter by source (e.g. ted, diavgeia, kimdis)"),
     limit: int = typer.Option(10, "--limit", "-l", help="Max results"),
     fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
     fields: str | None = typer.Option(None, "--fields", help="Comma-separated fields to include"),
@@ -203,14 +204,15 @@ def search(
 
     Examples:
         monopigi search "hospital" --format jsonl | jq '.title'
-        monopigi search "procurement" --fields source,title --format csv
+        monopigi search "procurement" --source ted
         monopigi search "Athens" --count
         monopigi search "hospital" --cache | grep diavgeia
     """
     query = _require_arg(ctx, query)
+    resolved_source = _resolve_source(source) if source else None
     try:
         with _get_client(cache=cache) as client:
-            resp = client.search(query, limit=limit)
+            resp = client.search(query, source=resolved_source, limit=limit)
             if count:
                 print(resp.total)
             else:
@@ -479,19 +481,13 @@ def browse(
     query: str = typer.Option("", "--query", "-q", help="Pre-filter query"),
     limit: int = typer.Option(100, "--limit", "-l", help="Max documents to load"),
 ) -> None:
-    """Interactive document browser with live filtering. Requires: pip install monopigi-sdk[fuzzy]
+    """Interactive document browser with live filtering.
 
     Examples:
         monopigi browse ted
         monopigi browse --query "hospital" --limit 200
     """
-    try:
-        from monopigi_sdk.browse import browse_documents, check_textual
-
-        check_textual()
-    except ImportError as e:
-        console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1) from e
+    from monopigi_sdk.browse import browse_documents
 
     try:
         with _get_client(cache=True) as client:

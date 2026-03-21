@@ -213,9 +213,12 @@ class MonopigiClient:
         resp = self._request("GET", "/v1/sources")
         return [Source(**s) for s in resp.json()]
 
-    def search(self, query: str, limit: int = 100, offset: int = 0) -> SearchResponse:
-        """Search across all sources."""
-        resp = self._request("GET", "/v1/search", params={"q": query, "limit": limit, "offset": offset})
+    def search(self, query: str, source: str | None = None, limit: int = 100, offset: int = 0) -> SearchResponse:
+        """Search across all sources, or filtered to a specific source."""
+        params: dict[str, str | int] = {"q": query, "limit": limit, "offset": offset}
+        if source:
+            params["source"] = source
+        resp = self._request("GET", "/v1/search", params=params)
         return SearchResponse(**resp.json())
 
     def documents(self, source: str, limit: int = 100, offset: int = 0, since: str | None = None) -> DocumentsResponse:
@@ -439,9 +442,12 @@ class AsyncMonopigiClient:
         resp = await self._request("GET", "/v1/sources")
         return [Source(**s) for s in resp.json()]
 
-    async def search(self, query: str, limit: int = 100, offset: int = 0) -> SearchResponse:
-        """Search across all sources."""
-        resp = await self._request("GET", "/v1/search", params={"q": query, "limit": limit, "offset": offset})
+    async def search(self, query: str, source: str | None = None, limit: int = 100, offset: int = 0) -> SearchResponse:
+        """Search across all sources, or filtered to a specific source."""
+        params: dict[str, str | int] = {"q": query, "limit": limit, "offset": offset}
+        if source:
+            params["source"] = source
+        resp = await self._request("GET", "/v1/search", params=params)
         return SearchResponse(**resp.json())
 
     async def documents(

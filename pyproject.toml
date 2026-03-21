@@ -18,12 +18,12 @@ dependencies = [
     "pydantic>=2.0",
     "typer>=0.15",
     "rich>=13.0",
+    "textual>=3.0",
 ]
 
 [project.optional-dependencies]
 df = ["polars>=1.0"]
-fuzzy = ["textual>=3.0"]
-all = ["polars>=1.0", "textual>=3.0"]
+all = ["polars>=1.0"]
 
 [project.scripts]
 monopigi = "monopigi_sdk.cli:app"
