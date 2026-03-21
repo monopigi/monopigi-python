@@ -19,3 +19,17 @@ class RateLimitError(MonopigiError):
 
 class NotFoundError(MonopigiError):
     """Requested resource not found (unknown source, etc.)."""
+
+
+class TierError(MonopigiError):
+    """Raised when accessing an endpoint that requires a higher tier."""
+
+    def __init__(self, required_tier: str, current_tier: str, endpoint: str) -> None:
+        self.required_tier = required_tier
+        self.current_tier = current_tier
+        self.endpoint = endpoint
+        super().__init__(
+            f"Endpoint '{endpoint}' requires {required_tier} tier or higher. "
+            f"Your current tier is {current_tier}. "
+            f"Upgrade at https://monopigi.com/dashboard/billing"
+        )

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import time
 from collections.abc import AsyncIterator, Iterator
@@ -13,10 +14,11 @@ import httpx
 
 from monopigi_sdk.cache import DiskCache
 from monopigi_sdk.config import DEFAULT_BASE_URL, Config, load_config
-from monopigi_sdk.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError
+from monopigi_sdk.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError, TierError
 from monopigi_sdk.models import (
     Document,
     DocumentsResponse,
+    QuotaInfo,
     SearchResponse,
     Source,
     StatsResponse,
@@ -51,10 +53,22 @@ def _resolve_config(token: str, base_url: str) -> tuple[str, str]:
     return token, base_url or DEFAULT_BASE_URL
 
 
-def _handle_error(resp: httpx.Response) -> None:
+def _handle_error(resp: httpx.Response, *, current_tier: str | None = None) -> None:
     """Raise typed exceptions for HTTP error responses."""
     if resp.status_code == 401:
         raise AuthError("Invalid or missing API token")
+    if resp.status_code == 403:
+        detail = ""
+        with contextlib.suppress(ValueError, KeyError):
+            detail = resp.json().get("detail", "") if resp.content else ""
+        required = _parse_required_tier(detail)
+        if required:
+            raise TierError(
+                required_tier=required,
+                current_tier=current_tier or "unknown",
+                endpoint=str(resp.url.path) if hasattr(resp.url, "path") else str(resp.url),
+            )
+        raise MonopigiError(f"API error 403: {detail or resp.text}")
     if resp.status_code == 429:
         reset = resp.headers.get("X-RateLimit-Reset", "")
         raise RateLimitError("Daily query quota exceeded", reset_at=reset)
@@ -66,6 +80,42 @@ def _handle_error(resp: httpx.Response) -> None:
         raise NotFoundError(detail)
     if resp.status_code >= 400:
         raise MonopigiError(f"API error {resp.status_code}: {resp.text}")
+
+
+def _parse_required_tier(detail: str) -> str | None:
+    """Extract tier name from a 403 detail like 'This feature requires a Pro subscription.'."""
+    if not detail:
+        return None
+    detail_lower = detail.lower()
+    for tier in ("enterprise", "pro", "free"):
+        if tier in detail_lower:
+            return tier
+    return None
+
+
+def _parse_quota_headers(headers: httpx.Headers) -> QuotaInfo | None:
+    """Parse rate-limit headers into QuotaInfo, or None if absent."""
+    limit = headers.get("X-RateLimit-Limit")
+    remaining = headers.get("X-RateLimit-Remaining")
+    reset = headers.get("X-RateLimit-Reset")
+    if limit is not None and remaining is not None and reset is not None:
+        try:
+            return QuotaInfo(limit=int(limit), remaining=int(remaining), reset=reset)
+        except (ValueError, TypeError):
+            return None
+    return None
+
+
+def _parse_tier_header(headers: httpx.Headers) -> str | None:
+    """Parse the X-Tier header, if present."""
+    return headers.get("X-Tier")
+
+
+TIER_FEATURES: dict[str, set[str]] = {
+    "free": {"metadata", "basic_search"},
+    "pro": {"metadata", "basic_search", "full_text", "content"},
+    "enterprise": {"metadata", "basic_search", "full_text", "content", "rag", "mcp", "entities", "similar"},
+}
 
 
 def _build_doc_params(limit: int, offset: int, since: str | None) -> dict[str, str | int]:
@@ -94,17 +144,45 @@ class MonopigiClient:
         token, base_url = _resolve_config(token, base_url)
         self._max_retries = max_retries
         self._cache: DiskCache | None = DiskCache(cache_ttl) if cache_ttl else None
+        self._tier: str | None = None
+        self._quota: QuotaInfo | None = None
         self._client = httpx.Client(
             base_url=base_url,
             headers={"Authorization": f"Bearer {token}"},
             timeout=30.0,
         )
 
+    @property
+    def tier(self) -> str | None:
+        """Current API key's tier (free/pro/enterprise), populated after first request."""
+        return self._tier
+
+    @property
+    def quota(self) -> QuotaInfo | None:
+        """Current quota info, populated after first request."""
+        return self._quota
+
+    def has_feature(self, feature: str) -> bool:
+        """Check if the current tier includes a feature."""
+        if not self._tier:
+            return False
+        return feature in TIER_FEATURES.get(self._tier, set())
+
+    def _update_tier_info(self, resp: httpx.Response) -> None:
+        """Update tier and quota from response headers."""
+        tier = _parse_tier_header(resp.headers)
+        if tier:
+            self._tier = tier
+        quota = _parse_quota_headers(resp.headers)
+        if quota:
+            self._quota = quota
+
     def _request_with_retry(self, method: str, path: str, **kwargs: object) -> httpx.Response:
         """Make a request with automatic retry on 429 rate-limit responses."""
         resp: httpx.Response | None = None
         for attempt in range(self._max_retries + 1):
             resp = self._client.request(method, path, **kwargs)  # type: ignore[arg-type]
+            self._update_tier_info(resp)
             if resp.status_code == 429 and attempt < self._max_retries:
                 reset = resp.headers.get("X-RateLimit-Reset", "")
                 wait = max(1, int(reset) - int(time.time())) if reset.isdigit() else 60
@@ -112,10 +190,10 @@ class MonopigiClient:
                 time.sleep(wait)
                 continue
             if resp.status_code >= 400:
-                _handle_error(resp)
+                _handle_error(resp, current_tier=self._tier)
             return resp
         assert resp is not None
-        _handle_error(resp)
+        _handle_error(resp, current_tier=self._tier)
         raise AssertionError("unreachable")  # pragma: no cover
 
     def _request(self, method: str, path: str, **kwargs: object) -> httpx.Response:
@@ -292,17 +370,45 @@ class AsyncMonopigiClient:
         token, base_url = _resolve_config(token, base_url)
         self._max_retries = max_retries
         self._cache: DiskCache | None = DiskCache(cache_ttl) if cache_ttl else None
+        self._tier: str | None = None
+        self._quota: QuotaInfo | None = None
         self._client = httpx.AsyncClient(
             base_url=base_url,
             headers={"Authorization": f"Bearer {token}"},
             timeout=30.0,
         )
 
+    @property
+    def tier(self) -> str | None:
+        """Current API key's tier (free/pro/enterprise), populated after first request."""
+        return self._tier
+
+    @property
+    def quota(self) -> QuotaInfo | None:
+        """Current quota info, populated after first request."""
+        return self._quota
+
+    def has_feature(self, feature: str) -> bool:
+        """Check if the current tier includes a feature."""
+        if not self._tier:
+            return False
+        return feature in TIER_FEATURES.get(self._tier, set())
+
+    def _update_tier_info(self, resp: httpx.Response) -> None:
+        """Update tier and quota from response headers."""
+        tier = _parse_tier_header(resp.headers)
+        if tier:
+            self._tier = tier
+        quota = _parse_quota_headers(resp.headers)
+        if quota:
+            self._quota = quota
+
     async def _request_with_retry(self, method: str, path: str, **kwargs: object) -> httpx.Response:
         """Make a request with automatic retry on 429 rate-limit responses."""
         resp: httpx.Response | None = None
         for attempt in range(self._max_retries + 1):
             resp = await self._client.request(method, path, **kwargs)  # type: ignore[arg-type]
+            self._update_tier_info(resp)
             if resp.status_code == 429 and attempt < self._max_retries:
                 reset = resp.headers.get("X-RateLimit-Reset", "")
                 wait = max(1, int(reset) - int(time.time())) if reset.isdigit() else 60
@@ -310,10 +416,10 @@ class AsyncMonopigiClient:
                 await asyncio.sleep(wait)
                 continue
             if resp.status_code >= 400:
-                _handle_error(resp)
+                _handle_error(resp, current_tier=self._tier)
             return resp
         assert resp is not None
-        _handle_error(resp)
+        _handle_error(resp, current_tier=self._tier)
         raise AssertionError("unreachable")  # pragma: no cover
 
     async def _request(self, method: str, path: str, **kwargs: object) -> httpx.Response:

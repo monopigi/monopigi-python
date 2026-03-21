@@ -117,6 +117,14 @@ class StatsResponse(BaseModel):
     message: str | None = None
 
 
+class QuotaInfo(BaseModel):
+    """Rate-limit quota info parsed from response headers."""
+
+    limit: int
+    remaining: int
+    reset: str
+
+
 class UsageResponse(BaseModel):
     """Response from /v1/usage."""
 
