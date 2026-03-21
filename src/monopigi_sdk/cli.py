@@ -45,6 +45,11 @@ def _require_arg(ctx: typer.Context, value: str | None) -> str:
 
 SOURCE_ALIASES = {"e_procurement": "kimdis", "eprocurement": "kimdis"}
 
+# Client-side overrides for source metadata (until API redeploys)
+SOURCE_OVERRIDES = {
+    "e_procurement": {"description": "Greek public procurement portal (1M+ contracts/year)"},
+}
+
 
 def _resolve_source(source: str) -> str:
     """Resolve source aliases (e.g., e_procurement → kimdis)."""
@@ -158,7 +163,10 @@ def sources() -> None:
             result = client.sources()
             if _is_pipe():
                 for s in result:
-                    print(json.dumps(s.model_dump(), ensure_ascii=False))
+                    data = s.model_dump()
+                    overrides = SOURCE_OVERRIDES.get(s.name, {})
+                    data.update(overrides)
+                    print(json.dumps(data, ensure_ascii=False))
             else:
                 table = Table(title="Monopigi Data Sources")
                 table.add_column("Name", style="cyan")
@@ -166,8 +174,10 @@ def sources() -> None:
                 table.add_column("Status")
                 table.add_column("Description", style="dim")
                 for s in result:
+                    overrides = SOURCE_OVERRIDES.get(s.name, {})
+                    desc = overrides.get("description", s.description)
                     status_style = "green" if s.status == SourceStatus.ACTIVE else "yellow"
-                    table.add_row(s.name, s.label, f"[{status_style}]{s.status}[/{status_style}]", s.description)
+                    table.add_row(s.name, s.label, f"[{status_style}]{s.status}[/{status_style}]", desc)
                 console.print(table)
     except MonopigiError as e:
         console.print(f"[red]Error:[/red] {e}")
