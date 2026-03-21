@@ -155,7 +155,7 @@ def sources() -> None:
     """List available data sources."""
     try:
         with _get_client() as client:
-            result = [s for s in client.sources() if s.name not in SOURCE_ALIASES]
+            result = client.sources()
             if _is_pipe():
                 for s in result:
                     print(json.dumps(s.model_dump(), ensure_ascii=False))
