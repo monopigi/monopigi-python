@@ -507,26 +507,27 @@ def browse(
 
     try:
         with _get_client(cache=True) as client:
+            if not source and not query:
+                # No source specified — show available sources and exit
+                active = [
+                    s for s in client.sources() if s.status == SourceStatus.ACTIVE and s.name not in SOURCE_ALIASES
+                ]
+                console.print("\n[bold]Available sources:[/bold]\n")
+                for s in active:
+                    console.print(f"  [cyan]{s.name:<15}[/cyan] {s.description}")
+                console.print(f"\n[dim]Usage: monopigi browse <source>[/dim]")
+                console.print(f"[dim]Example: monopigi browse ted[/dim]\n")
+                raise typer.Exit(0)
+
             if query:
                 resp = client.search(query, source=_resolve_source(source) if source else None, limit=limit)
                 docs = [doc.model_dump() for doc in resp.results]
-            elif source:
+            else:
                 resp = client.documents(_resolve_source(source), limit=limit)
                 docs = [doc.model_dump() for doc in resp.documents]
-            else:
-                # No source or query — load from all active sources
-                docs = []
-                sources = [s for s in client.sources() if s.status == SourceStatus.ACTIVE]
-                per_source = max(limit // len(sources), 5) if sources else limit
-                for s in sources:
-                    try:
-                        resp = client.documents(s.name, limit=per_source)
-                        docs.extend(doc.model_dump() for doc in resp.documents)
-                    except MonopigiError:
-                        continue
-                docs = docs[:limit]
+
             if not docs:
-                console.print("[yellow]No documents found.[/yellow] Try specifying a source: monopigi browse ted")
+                console.print("[yellow]No documents found.[/yellow]")
                 raise typer.Exit(0)
             browse_documents(docs, source=source)
     except MonopigiError as e:
