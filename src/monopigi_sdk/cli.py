@@ -23,8 +23,13 @@ if TYPE_CHECKING:
     from monopigi_sdk.client import MonopigiClient
     from monopigi_sdk.models import Document
 
-app = typer.Typer(name="monopigi", help="Query Greek government data from the command line.")
-auth_app = typer.Typer(help="Manage API authentication.")
+app = typer.Typer(
+    name="monopigi",
+    help="Query Greek government data from the command line.",
+    invoke_without_command=True,
+    no_args_is_help=True,
+)
+auth_app = typer.Typer(help="Manage API authentication.", no_args_is_help=True)
 app.add_typer(auth_app, name="auth")
 
 console = Console()
