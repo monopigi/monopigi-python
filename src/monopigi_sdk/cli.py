@@ -128,7 +128,10 @@ def _output_docs(docs: list[Document], fmt: OutputFormat, fields: str | None, ti
 
 
 @auth_app.command("login")
-def auth_login(ctx: typer.Context, token: str | None = typer.Argument(None, help="Your Monopigi API token (mp_live_...)")) -> None:
+def auth_login(
+    ctx: typer.Context,
+    token: str | None = typer.Argument(None, help="Your Monopigi API token (mp_live_...)"),
+) -> None:
     """Save your API token."""
     token = _require_arg(ctx, token)
     save_config(token, config_path=DEFAULT_CONFIG_PATH)
@@ -416,7 +419,11 @@ VALID_CONFIG_KEYS = {"base_url", "default_format", "default_source", "cache_ttl"
 
 
 @config_app.command("set")
-def config_set(ctx: typer.Context, key: str | None = typer.Argument(None), value: str | None = typer.Argument(None)) -> None:
+def config_set(
+    ctx: typer.Context,
+    key: str | None = typer.Argument(None),
+    value: str | None = typer.Argument(None),
+) -> None:
     """Set a config value.
 
     Keys:
