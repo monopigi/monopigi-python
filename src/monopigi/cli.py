@@ -15,13 +15,13 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from monopigi_sdk.config import DEFAULT_CONFIG_PATH, load_config, save_config
-from monopigi_sdk.exceptions import MonopigiError
-from monopigi_sdk.models import OutputFormat, SourceStatus
+from monopigi.config import DEFAULT_CONFIG_PATH, load_config, save_config
+from monopigi.exceptions import MonopigiError
+from monopigi.models import OutputFormat, SourceStatus
 
 if TYPE_CHECKING:
-    from monopigi_sdk.client import MonopigiClient
-    from monopigi_sdk.models import Document
+    from monopigi.client import MonopigiClient
+    from monopigi.models import Document
 
 app = typer.Typer(
     name="monopigi",
@@ -69,7 +69,7 @@ def _resolve_format(fmt: OutputFormat) -> OutputFormat:
 
 
 def _get_client(cache: bool = False) -> MonopigiClient:
-    from monopigi_sdk.client import MonopigiClient
+    from monopigi.client import MonopigiClient
 
     cfg = load_config(config_path=DEFAULT_CONFIG_PATH)
     if not cfg.token:
@@ -503,7 +503,7 @@ def browse(
         monopigi browse ted
         monopigi browse --query "hospital" --limit 200
     """
-    from monopigi_sdk.browse import browse_documents
+    from monopigi.browse import browse_documents
 
     try:
         with _get_client(cache=True) as client:
@@ -546,7 +546,7 @@ def pipe(
         cat company_names.txt | monopigi pipe --limit 5
         monopigi documents ted -f jsonl | jq -r '.title' | monopigi pipe
     """
-    from monopigi_sdk.pipe import pipe_search
+    from monopigi.pipe import pipe_search
 
     try:
         with _get_client() as client:
@@ -559,6 +559,6 @@ def pipe(
 @app.command()
 def completions() -> None:
     """Show how to install shell tab completions."""
-    from monopigi_sdk.completions import get_completion_instructions
+    from monopigi.completions import get_completion_instructions
 
     console.print(get_completion_instructions())

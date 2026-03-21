@@ -4,7 +4,7 @@ import json
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
-from monopigi_sdk.pipe import pipe_search
+from monopigi.pipe import pipe_search
 
 
 def test_pipe_search_reads_stdin() -> None:

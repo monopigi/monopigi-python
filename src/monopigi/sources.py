@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from monopigi_sdk.models import DocumentsResponse
+from monopigi.models import DocumentsResponse
 
 if TYPE_CHECKING:
-    from monopigi_sdk.client import AsyncMonopigiClient, MonopigiClient
+    from monopigi.client import AsyncMonopigiClient, MonopigiClient
 
 
 # -- Sync source clients -------------------------------------------------------

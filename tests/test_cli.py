@@ -3,8 +3,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from monopigi_sdk.cli import _filter_fields, app
-from monopigi_sdk.models import OutputFormat
+from monopigi.cli import _filter_fields, app
+from monopigi.models import OutputFormat
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -12,7 +12,7 @@ runner = CliRunner()
 
 def test_auth_login(tmp_path: Path) -> None:
     config_path = tmp_path / "config.toml"
-    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+    with patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path):
         result = runner.invoke(app, ["auth", "login", "mp_live_testtoken123"])
     assert result.exit_code == 0
     assert "saved" in result.stdout.lower() or "authenticated" in result.stdout.lower()
@@ -26,7 +26,7 @@ def test_auth_login_no_token() -> None:
 
 def test_auth_status_no_config(tmp_path: Path) -> None:
     config_path = tmp_path / "nonexistent.toml"
-    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+    with patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path):
         result = runner.invoke(app, ["auth", "status"])
     assert result.exit_code == 0
     assert "not configured" in result.stdout.lower() or "no token" in result.stdout.lower()
@@ -34,7 +34,7 @@ def test_auth_status_no_config(tmp_path: Path) -> None:
 
 def test_sources_requires_auth(tmp_path: Path) -> None:
     config_path = tmp_path / "nonexistent.toml"
-    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+    with patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path):
         result = runner.invoke(app, ["sources"])
     assert result.exit_code != 0 or "no api token" in result.stdout.lower()
 
@@ -71,8 +71,8 @@ def test_search_count_flag(tmp_path: Path) -> None:
     mock_client.__exit__ = MagicMock(return_value=False)
 
     with (
-        patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path),
-        patch("monopigi_sdk.cli._get_client", return_value=mock_client),
+        patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path),
+        patch("monopigi.cli._get_client", return_value=mock_client),
     ):
         result = runner.invoke(app, ["search", "hospital", "--count"])
 
@@ -108,8 +108,8 @@ def test_search_fields_flag(tmp_path: Path) -> None:
     mock_client.__exit__ = MagicMock(return_value=False)
 
     with (
-        patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path),
-        patch("monopigi_sdk.cli._get_client", return_value=mock_client),
+        patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path),
+        patch("monopigi.cli._get_client", return_value=mock_client),
     ):
         result = runner.invoke(app, ["search", "hospital", "--fields", "source,title", "--format", "json"])
 
@@ -122,7 +122,7 @@ def test_search_fields_flag(tmp_path: Path) -> None:
 
 def test_config_set_and_get(tmp_path: Path) -> None:
     config_path = tmp_path / "config.toml"
-    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+    with patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path):
         result = runner.invoke(app, ["config", "set", "cache_ttl", "600"])
     assert result.exit_code == 0
     assert "cache_ttl" in result.stdout
@@ -130,7 +130,7 @@ def test_config_set_and_get(tmp_path: Path) -> None:
 
 def test_config_set_invalid_key(tmp_path: Path) -> None:
     config_path = tmp_path / "config.toml"
-    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+    with patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path):
         result = runner.invoke(app, ["config", "set", "invalid_key", "value"])
     assert result.exit_code != 0
 
@@ -139,7 +139,7 @@ def test_config_list(tmp_path: Path) -> None:
     config_path = tmp_path / "config.toml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text('token = "mp_live_test"\nbase_url = "https://api.monopigi.com"\n')
-    with patch("monopigi_sdk.cli.DEFAULT_CONFIG_PATH", config_path):
+    with patch("monopigi.cli.DEFAULT_CONFIG_PATH", config_path):
         result = runner.invoke(app, ["config", "list"])
     assert result.exit_code == 0
     assert "token" in result.stdout

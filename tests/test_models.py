@@ -1,7 +1,7 @@
 """Tests for SDK models and exceptions."""
 
-from monopigi_sdk.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError
-from monopigi_sdk.models import (
+from monopigi.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError
+from monopigi.models import (
     Document,
     DocumentsResponse,
     OutputFormat,

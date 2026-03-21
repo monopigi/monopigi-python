@@ -1,8 +1,8 @@
 """Tests for tier awareness: quota tracking, TierError, and has_feature."""
 
 import pytest
-from monopigi_sdk.client import AsyncMonopigiClient, MonopigiClient
-from monopigi_sdk.exceptions import TierError
+from monopigi.client import AsyncMonopigiClient, MonopigiClient
+from monopigi.exceptions import TierError
 from pytest_httpx import HTTPXMock
 
 

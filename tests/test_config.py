@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from monopigi_sdk.config import Config, load_config, save_config
+from monopigi.config import Config, load_config, save_config
 
 
 def test_save_and_load_config(tmp_path: Path) -> None:

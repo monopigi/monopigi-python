@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from monopigi_sdk.cache import DiskCache
-from monopigi_sdk.client import MonopigiClient
+from monopigi.cache import DiskCache
+from monopigi.client import MonopigiClient
 from pytest_httpx import HTTPXMock
 
 
@@ -30,7 +30,7 @@ class TestDiskCache:
     def test_cache_expired_returns_none(self, cache_dir, monkeypatch) -> None:
         import time as time_mod
 
-        import monopigi_sdk.cache as cache_mod
+        import monopigi.cache as cache_mod
 
         cache = DiskCache(ttl=10, cache_dir=cache_dir)
         cache.set("GET", "https://api.example.com/v1/search", "{}", '{"results": []}')

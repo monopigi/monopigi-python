@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from monopigi_sdk.models import Document
+    from monopigi.models import Document
 
 
 def iter_with_progress(

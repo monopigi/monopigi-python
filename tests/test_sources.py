@@ -1,8 +1,8 @@
 """Tests for source-specific typed clients."""
 
-from monopigi_sdk.client import MonopigiClient
-from monopigi_sdk.models import DocumentsResponse
-from monopigi_sdk.sources import DiavgeiaSource, TedSource
+from monopigi.client import MonopigiClient
+from monopigi.models import DocumentsResponse
+from monopigi.sources import DiavgeiaSource, TedSource
 from pytest_httpx import HTTPXMock
 
 

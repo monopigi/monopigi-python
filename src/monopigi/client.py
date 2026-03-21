@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING
 
 import httpx
 
-from monopigi_sdk.cache import DiskCache
-from monopigi_sdk.config import DEFAULT_BASE_URL, Config, load_config
-from monopigi_sdk.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError, TierError
-from monopigi_sdk.models import (
+from monopigi.cache import DiskCache
+from monopigi.config import DEFAULT_BASE_URL, Config, load_config
+from monopigi.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError, TierError
+from monopigi.models import (
     Document,
     DocumentsResponse,
     QuotaInfo,
@@ -26,7 +26,7 @@ from monopigi_sdk.models import (
 )
 
 if TYPE_CHECKING:
-    from monopigi_sdk.sources import (
+    from monopigi.sources import (
         AsyncDataGovGrSource,
         AsyncDiavgeiaSource,
         AsyncElstatSource,
@@ -272,7 +272,7 @@ class MonopigiClient:
 
         Formats: json, csv, parquet (requires polars)
         """
-        from monopigi_sdk.progress import iter_with_progress
+        from monopigi.progress import iter_with_progress
 
         # First get total count
         resp = self.documents(source, limit=1, since=since)
@@ -311,37 +311,37 @@ class MonopigiClient:
 
     @property
     def ted(self) -> TedSource:
-        from monopigi_sdk.sources import TedSource
+        from monopigi.sources import TedSource
 
         return TedSource(self)
 
     @property
     def diavgeia(self) -> DiavgeiaSource:
-        from monopigi_sdk.sources import DiavgeiaSource
+        from monopigi.sources import DiavgeiaSource
 
         return DiavgeiaSource(self)
 
     @property
     def elstat(self) -> ElstatSource:
-        from monopigi_sdk.sources import ElstatSource
+        from monopigi.sources import ElstatSource
 
         return ElstatSource(self)
 
     @property
     def rae(self) -> RaeSource:
-        from monopigi_sdk.sources import RaeSource
+        from monopigi.sources import RaeSource
 
         return RaeSource(self)
 
     @property
     def data_gov_gr(self) -> DataGovGrSource:
-        from monopigi_sdk.sources import DataGovGrSource
+        from monopigi.sources import DataGovGrSource
 
         return DataGovGrSource(self)
 
     @property
     def mitos(self) -> MitosSource:
-        from monopigi_sdk.sources import MitosSource
+        from monopigi.sources import MitosSource
 
         return MitosSource(self)
 
@@ -497,37 +497,37 @@ class AsyncMonopigiClient:
 
     @property
     def ted(self) -> AsyncTedSource:
-        from monopigi_sdk.sources import AsyncTedSource
+        from monopigi.sources import AsyncTedSource
 
         return AsyncTedSource(self)
 
     @property
     def diavgeia(self) -> AsyncDiavgeiaSource:
-        from monopigi_sdk.sources import AsyncDiavgeiaSource
+        from monopigi.sources import AsyncDiavgeiaSource
 
         return AsyncDiavgeiaSource(self)
 
     @property
     def elstat(self) -> AsyncElstatSource:
-        from monopigi_sdk.sources import AsyncElstatSource
+        from monopigi.sources import AsyncElstatSource
 
         return AsyncElstatSource(self)
 
     @property
     def rae(self) -> AsyncRaeSource:
-        from monopigi_sdk.sources import AsyncRaeSource
+        from monopigi.sources import AsyncRaeSource
 
         return AsyncRaeSource(self)
 
     @property
     def data_gov_gr(self) -> AsyncDataGovGrSource:
-        from monopigi_sdk.sources import AsyncDataGovGrSource
+        from monopigi.sources import AsyncDataGovGrSource
 
         return AsyncDataGovGrSource(self)
 
     @property
     def mitos(self) -> AsyncMitosSource:
-        from monopigi_sdk.sources import AsyncMitosSource
+        from monopigi.sources import AsyncMitosSource
 
         return AsyncMitosSource(self)
 

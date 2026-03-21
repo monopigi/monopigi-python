@@ -1,5 +1,5 @@
 [project]
-name = "monopigi-sdk"
+name = "monopigi"
 version = "0.1.0"
 description = "Python SDK and CLI for the Monopigi Greek Government Data API"
 requires-python = ">=3.12"
@@ -26,7 +26,7 @@ df = ["polars>=1.0"]
 all = ["polars>=1.0"]
 
 [project.scripts]
-monopigi = "monopigi_sdk.cli:app"
+monopigi = "monopigi.cli:app"
 
 [project.urls]
 Homepage = "https://monopigi.com"

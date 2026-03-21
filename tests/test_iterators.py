@@ -1,6 +1,6 @@
 """Tests for pagination iterators."""
 
-from monopigi_sdk.client import MonopigiClient
+from monopigi.client import MonopigiClient
 from pytest_httpx import HTTPXMock
 
 

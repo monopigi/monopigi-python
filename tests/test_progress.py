@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock
 
-from monopigi_sdk.progress import iter_with_progress
+from monopigi.progress import iter_with_progress
 
 
 def test_iter_with_progress_yields_all() -> None:

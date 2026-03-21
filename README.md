@@ -1,4 +1,4 @@
-# monopigi-sdk
+# monopigi
 
 Python SDK and CLI for the **Monopigi Greek Government Data API**.
 
@@ -8,16 +8,16 @@ One API. 31M+ government decisions. 18K+ EU procurement notices. 10K+ energy per
 
 ```bash
 # Base package
-pip install monopigi-sdk
+pip install monopigi
 
 # With Polars DataFrame support
-pip install monopigi-sdk[df]
+pip install monopigi[df]
 
 # With interactive TUI browser
-pip install monopigi-sdk[fuzzy]
+pip install monopigi[fuzzy]
 
 # Everything
-pip install monopigi-sdk[all]
+pip install monopigi[all]
 ```
 
 Requires Python 3.12+.
@@ -372,7 +372,7 @@ monopigi export ted sample.json --limit 100
 
 ### Interactive Browser
 
-Requires `monopigi-sdk[fuzzy]`:
+Requires `monopigi[fuzzy]`:
 
 ```bash
 # Browse documents from a source

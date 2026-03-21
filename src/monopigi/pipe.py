@@ -7,7 +7,7 @@ import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from monopigi_sdk.client import MonopigiClient
+    from monopigi.client import MonopigiClient
 
 
 def pipe_search(client: MonopigiClient, limit: int = 3) -> None:

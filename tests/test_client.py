@@ -1,8 +1,8 @@
 """Tests for Monopigi API client."""
 
 import pytest
-from monopigi_sdk.client import AsyncMonopigiClient, MonopigiClient
-from monopigi_sdk.exceptions import AuthError, NotFoundError, RateLimitError
+from monopigi.client import AsyncMonopigiClient, MonopigiClient
+from monopigi.exceptions import AuthError, NotFoundError, RateLimitError
 from pytest_httpx import HTTPXMock
 
 
@@ -126,7 +126,7 @@ async def test_async_sources(api_token: str, base_url: str, httpx_mock: HTTPXMoc
 
 def test_429_auto_retries(api_token: str, base_url: str, httpx_mock: HTTPXMock, monkeypatch) -> None:
     """Client retries on 429 and succeeds when the next response is 200."""
-    monkeypatch.setattr("monopigi_sdk.client.time.sleep", lambda _: None)
+    monkeypatch.setattr("monopigi.client.time.sleep", lambda _: None)
     # First response: 429, second response: 200
     httpx_mock.add_response(
         status_code=429,
@@ -144,7 +144,7 @@ def test_429_auto_retries(api_token: str, base_url: str, httpx_mock: HTTPXMock, 
 
 def test_429_exhausts_retries(api_token: str, base_url: str, httpx_mock: HTTPXMock, monkeypatch) -> None:
     """Client raises RateLimitError after exhausting all retries."""
-    monkeypatch.setattr("monopigi_sdk.client.time.sleep", lambda _: None)
+    monkeypatch.setattr("monopigi.client.time.sleep", lambda _: None)
     # 4 responses: all 429 (1 initial + 3 retries)
     for _ in range(4):
         httpx_mock.add_response(
