@@ -132,4 +132,4 @@ class UsageResponse(BaseModel):
     daily_quota: int
     daily_used: int
     daily_remaining: int
-    reset_at: str
+    reset_at: int | str
