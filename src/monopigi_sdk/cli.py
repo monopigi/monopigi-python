@@ -43,6 +43,14 @@ def _require_arg(ctx: typer.Context, value: str | None) -> str:
     return value
 
 
+SOURCE_ALIASES = {"e_procurement": "kimdis", "eprocurement": "kimdis"}
+
+
+def _resolve_source(source: str) -> str:
+    """Resolve source aliases (e.g., e_procurement → kimdis)."""
+    return SOURCE_ALIASES.get(source, source)
+
+
 def _is_pipe() -> bool:
     """Check if stdout is being piped (not a TTY)."""
     return not sys.stdout.isatty()
@@ -217,7 +225,7 @@ def documents(
         monopigi documents diavgeia --since 2026-01-01 --fields title,source_url --format csv
         monopigi documents ted --count
     """
-    source = _require_arg(ctx, source)
+    source = _resolve_source(_require_arg(ctx, source))
     try:
         with _get_client(cache=cache) as client:
             resp = client.documents(source, limit=limit, since=since)
@@ -298,7 +306,7 @@ def export(
     """
     try:
         with _get_client() as client:
-            source = _require_arg(ctx, source)
+            source = _resolve_source(_require_arg(ctx, source))
             path = _require_arg(ctx, path)
             count = client.export(source, path, format=fmt, since=since, limit=limit)
             console.print(f"[green]Exported {count} documents to {path}[/green]")
@@ -357,7 +365,7 @@ def diff(
         monopigi diff ted
         monopigi diff diavgeia --since 2026-03-15
     """
-    source = _require_arg(ctx, source)
+    source = _resolve_source(_require_arg(ctx, source))
     import time
 
     last_check_file = DEFAULT_CONFIG_PATH.parent / "last_check.json"
