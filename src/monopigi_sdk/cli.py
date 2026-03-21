@@ -462,17 +462,33 @@ def config_get(ctx: typer.Context, key: str | None = typer.Argument(None)) -> No
 
 @config_app.command("list")
 def config_list() -> None:
-    """Show all config values."""
+    """Show all config values and file locations."""
     config_file = DEFAULT_CONFIG_PATH.parent / "settings.json"
     auth_cfg = load_config(config_path=DEFAULT_CONFIG_PATH)
+    console.print(f"\n[dim]Config file:[/dim] {DEFAULT_CONFIG_PATH}")
     console.print(
         f"[bold]token:[/bold] {auth_cfg.token[:16]}..." if auth_cfg.token else "[bold]token:[/bold] [dim]not set[/dim]"
     )
     console.print(f"[bold]base_url:[/bold] {auth_cfg.base_url}")
     if config_file.exists():
+        console.print(f"\n[dim]Settings file:[/dim] {config_file}")
         settings = json.loads(config_file.read_text())
         for k, v in settings.items():
             console.print(f"[bold]{k}:[/bold] {v}")
+    console.print()
+
+
+@config_app.command("edit")
+def config_edit() -> None:
+    """Open config file in $EDITOR."""
+    import os
+    import subprocess
+
+    editor = os.environ.get("EDITOR", os.environ.get("VISUAL", "vi"))
+    if not DEFAULT_CONFIG_PATH.exists():
+        DEFAULT_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        DEFAULT_CONFIG_PATH.write_text('token = ""\nbase_url = "https://api.monopigi.com"\n')
+    subprocess.run([editor, str(DEFAULT_CONFIG_PATH)], check=False)
 
 
 @app.command()
