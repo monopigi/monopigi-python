@@ -515,8 +515,8 @@ def browse(
                 console.print("\n[bold]Available sources:[/bold]\n")
                 for s in active:
                     console.print(f"  [cyan]{s.name:<15}[/cyan] {s.description}")
-                console.print(f"\n[dim]Usage: monopigi browse <source>[/dim]")
-                console.print(f"[dim]Example: monopigi browse ted[/dim]\n")
+                console.print("\n[dim]Usage: monopigi browse <source>[/dim]")
+                console.print("[dim]Example: monopigi browse ted[/dim]\n")
                 raise typer.Exit(0)
 
             if query:
