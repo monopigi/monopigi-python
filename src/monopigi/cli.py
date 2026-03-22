@@ -551,3 +551,132 @@ def completions() -> None:
     from monopigi.completions import get_completion_instructions
 
     console.print(get_completion_instructions())
+
+
+# -- Enterprise Commands -------------------------------------------------------
+
+
+@app.command()
+def ask(
+    question: str = typer.Argument(..., help="Natural language question about Greek government data"),
+    limit: int = typer.Option(5, "--limit", "-l", help="Number of source documents to retrieve"),
+) -> None:
+    """Ask a question about Greek government data (RAG). Enterprise only.
+
+    Examples:
+    monopigi ask "What are the largest public contracts in 2025?"
+    monopigi ask "How much did the government spend on IT consulting?" --limit 10
+    """
+    try:
+        with _get_client() as client:
+            result = client.ask(question, limit=limit)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                console.print(f"\n[bold]Question:[/bold] {result.get('question', '')}\n")
+                console.print(f"[bold]Answer:[/bold]\n{result.get('answer', 'No answer available.')}\n")
+                sources = result.get("sources", [])
+                if sources:
+                    console.print(f"[dim]Sources ({len(sources)}):[/dim]")
+                    for s in sources:
+                        src = s.get("source", "")
+                        title = s.get("title", "Untitled")
+                        sid = s.get("source_id", "")
+                        console.print(f"  [{src}] {title} ({sid})")
+                if result.get("model"):
+                    console.print(f"\n[dim]Model: {result['model']}[/dim]")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def entity(
+    identifier: str = typer.Argument(..., help="Entity identifier (AFM, name, or ADA code)"),
+    type: str = typer.Option("afm", "--type", "-t", help="Identifier type: afm, name, or ada"),
+    fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f"),  # noqa: B008
+) -> None:
+    """Look up an entity across all government data sources. Enterprise only.
+
+    Examples:
+    monopigi entity 099369820 --type afm
+    monopigi entity "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ" --type name
+    monopigi entity ABC946X --type ada
+    """
+    try:
+        with _get_client() as client:
+            result = client.entity(identifier, identifier_type=type)
+            if _is_pipe() or fmt != OutputFormat.TABLE:
+                print(json.dumps(result, ensure_ascii=False, default=str))
+            else:
+                matches = result.get("matches", [])
+                console.print(f"\n[bold]{result.get('identifier_type', 'entity')}:[/bold] {identifier}")
+                console.print(f"[bold]Matches:[/bold] {result.get('total', 0)}\n")
+                if matches:
+                    for m in matches[:20]:
+                        title = m.get("title") or "Untitled"
+                        console.print(f"  [{m.get('source', '')}] {title}")
+                        console.print(f"    [dim]{m.get('source_id', '')} | {m.get('published_at', '—')}[/dim]")
+                elif result.get("error"):
+                    console.print(f"[red]{result['error']}[/red]")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def similar(
+    source_id: str = typer.Argument(..., help="Source ID of the document to find similar documents for"),
+    limit: int = typer.Option(10, "--limit", "-l"),
+    fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f"),  # noqa: B008
+) -> None:
+    """Find documents similar to a given document. Enterprise only.
+
+    Examples:
+    monopigi similar "rae:rae_status:V_SDI_R_ANEMO:123"
+    monopigi similar "contract:26SYMV018689966" --limit 5
+    """
+    try:
+        with _get_client() as client:
+            result = client.similar(source_id, limit=limit)
+            docs = result.get("similar", [])
+            if _is_pipe() or fmt != OutputFormat.TABLE:
+                print(json.dumps(result, ensure_ascii=False, default=str))
+            else:
+                console.print(f"\n[bold]Similar to:[/bold] {source_id}")
+                console.print(f"[bold]Found:[/bold] {len(docs)}\n")
+                for d in docs:
+                    title = d.get("title") or "Untitled"
+                    console.print(f"  [{d.get('source', '')}] {title}")
+                    console.print(f"    [dim]{d.get('source_id', '')}[/dim]")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@app.command()
+def content(
+    source_id: str = typer.Argument(..., help="Document source ID to download"),
+    output: str = typer.Option("", "--output", "-o", help="Output file path (default: print to stdout)"),
+) -> None:
+    """Download original document content (PDF, XML, JSON). Enterprise only.
+
+    Examples:
+    monopigi content "ABC946X" --output decision.pdf
+    monopigi content "ted:12345" --output notice.xml
+    """
+    try:
+        with _get_client() as client:
+            data = client.content(source_id)
+            if output:
+                from pathlib import Path
+
+                Path(output).write_bytes(data)
+                console.print(f"[green]Saved {len(data)} bytes to {output}[/green]")
+            else:
+                import sys
+
+                sys.stdout.buffer.write(data)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e

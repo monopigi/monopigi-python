@@ -236,6 +236,28 @@ class MonopigiClient:
         resp = self._request("GET", "/v1/usage")
         return UsageResponse(**resp.json())
 
+    # -- Enterprise features ---------------------------------------------------
+
+    def ask(self, question: str, limit: int = 5) -> dict:
+        """Ask a natural language question (RAG). Enterprise only."""
+        resp = self._request("POST", "/v1/ask", json={"question": question, "limit": limit})
+        return resp.json()
+
+    def entity(self, identifier: str, identifier_type: str = "afm") -> dict:
+        """Resolve an entity by AFM, name, or ADA. Enterprise only."""
+        resp = self._request("GET", f"/v1/entity/{identifier}", params={"type": identifier_type})
+        return resp.json()
+
+    def similar(self, source_id: str, limit: int = 10) -> dict:
+        """Find similar documents. Enterprise only."""
+        resp = self._request("GET", f"/v1/similar/{source_id}", params={"limit": limit})
+        return resp.json()
+
+    def content(self, source_id: str) -> bytes:
+        """Download original document content (PDF/XML/JSON). Enterprise only."""
+        resp = self._request("GET", f"/v1/documents/{source_id}/content")
+        return resp.content
+
     # -- Pagination iterators --------------------------------------------------
 
     def search_iter(self, query: str, page_size: int = 100) -> Iterator[Document]:
@@ -466,6 +488,28 @@ class AsyncMonopigiClient:
         """Get your API usage for today."""
         resp = await self._request("GET", "/v1/usage")
         return UsageResponse(**resp.json())
+
+    # -- Enterprise features ---------------------------------------------------
+
+    async def ask(self, question: str, limit: int = 5) -> dict:
+        """Ask a natural language question (RAG). Enterprise only."""
+        resp = await self._request("POST", "/v1/ask", json={"question": question, "limit": limit})
+        return resp.json()
+
+    async def entity(self, identifier: str, identifier_type: str = "afm") -> dict:
+        """Resolve an entity by AFM, name, or ADA. Enterprise only."""
+        resp = await self._request("GET", f"/v1/entity/{identifier}", params={"type": identifier_type})
+        return resp.json()
+
+    async def similar(self, source_id: str, limit: int = 10) -> dict:
+        """Find similar documents. Enterprise only."""
+        resp = await self._request("GET", f"/v1/similar/{source_id}", params={"limit": limit})
+        return resp.json()
+
+    async def content(self, source_id: str) -> bytes:
+        """Download original document content (PDF/XML/JSON). Enterprise only."""
+        resp = await self._request("GET", f"/v1/documents/{source_id}/content")
+        return resp.content
 
     # -- Pagination iterators --------------------------------------------------
 
