@@ -554,13 +554,62 @@ monopigi stats | jq '.sources | to_entries | sort_by(-.value.documents) | .[].ke
 
 ---
 
+## Enterprise Features
+
+Enterprise tier unlocks AI-powered analysis and cross-source intelligence:
+
+### Ask (RAG) — AI-generated answers from government data
+
+```bash
+monopigi ask "What are the largest public contracts in Thessaloniki?"
+monopigi ask "How much did the government spend on IT consulting?" --limit 10
+```
+
+```python
+answer = client.ask("What energy permits were issued in Crete?")
+print(answer["answer"])
+print(answer["sources"])
+```
+
+### Entity Resolution — find all records for a company or person
+
+```bash
+monopigi entity 099369820 --type afm
+monopigi entity "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ" --type name
+```
+
+```python
+entity = client.entity("099369820", identifier_type="afm")
+for match in entity["matches"]:
+    print(f"  {match['source']}: {match['title']}")
+```
+
+### Similar Documents
+
+```bash
+monopigi similar "contract:26SYMV018689966"
+```
+
+### Content Download — original PDFs, XML, JSON
+
+```bash
+monopigi content "diavgeia:ABC123" --output decision.pdf
+```
+
+```python
+pdf = client.content("diavgeia:ABC123")
+Path("decision.pdf").write_bytes(pdf)
+```
+
+---
+
 ## Pricing
 
-| Tier | Price | Daily Queries |
-|------|-------|---------------|
-| Free | EUR 0 | 5 |
-| Pro | EUR 299/mo | 5,000 |
-| Enterprise | Custom | Unlimited |
+| Tier | Price | Daily Queries | Features |
+|------|-------|---------------|----------|
+| Free | EUR 0 | 5 | Sources, stats, metadata |
+| Pro | EUR 299/mo | 5,000 | + Search, full text, export |
+| Enterprise | EUR 999+/mo | 1,000,000 | + RAG, entity resolution, MCP, content download |
 
 Get your API key at [monopigi.com](https://monopigi.com).
 
