@@ -560,16 +560,18 @@ def completions() -> None:
 def ask(
     question: str = typer.Argument(..., help="Natural language question about Greek government data"),
     limit: int = typer.Option(5, "--limit", "-l", help="Number of source documents to retrieve"),
+    model: str = typer.Option("", "--model", "-m", help="LLM model override (e.g. anthropic/claude-sonnet-4-20250514)"),
 ) -> None:
     """Ask a question about Greek government data (RAG). Enterprise only.
 
     Examples:
     monopigi ask "What are the largest public contracts in 2025?"
     monopigi ask "How much did the government spend on IT consulting?" --limit 10
+    monopigi ask "energy permits in Crete" --model mistral/mistral-large-latest
     """
     try:
         with _get_client() as client:
-            result = client.ask(question, limit=limit)
+            result = client.ask(question, limit=limit, model=model or None)
             if _is_pipe():
                 print(json.dumps(result, ensure_ascii=False))
             else:

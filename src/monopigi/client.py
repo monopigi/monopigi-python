@@ -238,9 +238,12 @@ class MonopigiClient:
 
     # -- Enterprise features ---------------------------------------------------
 
-    def ask(self, question: str, limit: int = 5) -> dict:
+    def ask(self, question: str, limit: int = 5, model: str | None = None) -> dict:
         """Ask a natural language question (RAG). Enterprise only."""
-        resp = self._request("POST", "/v1/ask", json={"question": question, "limit": limit})
+        payload: dict = {"question": question, "limit": limit}
+        if model:
+            payload["model"] = model
+        resp = self._request("POST", "/v1/ask", json=payload)
         return resp.json()
 
     def entity(self, identifier: str, identifier_type: str = "afm") -> dict:
@@ -491,9 +494,12 @@ class AsyncMonopigiClient:
 
     # -- Enterprise features ---------------------------------------------------
 
-    async def ask(self, question: str, limit: int = 5) -> dict:
+    async def ask(self, question: str, limit: int = 5, model: str | None = None) -> dict:
         """Ask a natural language question (RAG). Enterprise only."""
-        resp = await self._request("POST", "/v1/ask", json={"question": question, "limit": limit})
+        payload: dict = {"question": question, "limit": limit}
+        if model:
+            payload["model"] = model
+        resp = await self._request("POST", "/v1/ask", json=payload)
         return resp.json()
 
     async def entity(self, identifier: str, identifier_type: str = "afm") -> dict:
