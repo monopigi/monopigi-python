@@ -295,27 +295,117 @@ monopigi config list
 
 ### Searching
 
+**Basic search:**
+
 ```bash
-# Search all sources (Rich table output)
-monopigi search "hospital procurement"
+# Simple keyword search
+monopigi search "hospital"
 
-# Limit results
-monopigi search "tender" --limit 20
+# Multi-word queries
+monopigi search "public procurement Athens"
 
-# Output as JSON (syntax-highlighted on terminal)
+# Greek language queries
+monopigi search "δημόσιο νοσοκομείο"
+```
+
+**Filtering by source:**
+
+```bash
+# Search only in EU procurement tenders
+monopigi search "IT services" --source ted
+
+# Search Greek government decisions
+monopigi search "hospital" --source diavgeia
+
+# Search public contracts registry
+monopigi search "construction" --source kimdis
+
+# Search energy permits
+monopigi search "solar" --source rae
+```
+
+**Output formats:**
+
+```bash
+# Rich table (default in terminal)
+monopigi search "procurement" --limit 20
+
+# JSON (syntax highlighted)
 monopigi search "hospital" --format json
 
-# Output as CSV
-monopigi search "hospital" --format csv
+# JSONL (one JSON object per line — pipe to jq)
+monopigi search "tender" --format jsonl | jq '.title'
+
+# CSV (for spreadsheets)
+monopigi search "Athens" --format csv > results.csv
 
 # Select specific fields
-monopigi search "hospital" --fields source,title,published_at
+monopigi search "hospital" --fields source,title,published_at --format csv
+```
 
+**Counting and caching:**
+
+```bash
 # Just count results
-monopigi search "Athens" --count
+monopigi search "procurement" --count
 
-# Cache results for repeated queries
+# Cache results for repeated queries (5 min TTL)
 monopigi search "hospital" --cache
+```
+
+**Piping and composing:**
+
+```bash
+# Filter with grep
+monopigi search "hospital" --format jsonl | grep diavgeia
+
+# Count results per source
+monopigi search "procurement" --format jsonl | jq -r '.source' | sort | uniq -c | sort -rn
+
+# Extract just titles
+monopigi search "tender" --format jsonl | jq -r '.title'
+
+# Save to file
+monopigi search "Athens hospital" --format jsonl > hospitals.jsonl
+
+# Watch for new results in real-time
+monopigi watch "hospital procurement" --interval 60
+```
+
+**Python SDK search examples:**
+
+```python
+from monopigi import MonopigiClient
+
+with MonopigiClient("mp_live_...") as client:
+    # Basic search
+    results = client.search("hospital procurement")
+    print(f"Found {results.total} results")
+    for doc in results.results:
+        print(f"  [{doc.source}] {doc.title}")
+
+    # Search specific source
+    results = client.search("solar energy", source="rae")
+
+    # Search with limits
+    results = client.search("tender", limit=50)
+
+    # Check tier access
+    if client.has_feature("full_text"):
+        results = client.search("hospital", limit=100)
+    else:
+        print(f"Search requires Pro tier. Current: {client.tier}")
+```
+
+**Async Python:**
+
+```python
+from monopigi import AsyncMonopigiClient
+
+async with AsyncMonopigiClient("mp_live_...") as client:
+    results = await client.search("hospital", source="ted")
+    async for doc in client.search_iter("procurement"):
+        print(doc.title)
 ```
 
 ### Querying Sources
@@ -478,3 +568,11 @@ Get your API key at [monopigi.com](https://monopigi.com).
 
 - Website: [monopigi.com](https://monopigi.com)
 - Contact: info@monopigi.com
+
+---
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE) for details.
+
+The SDK is open source. The Monopigi API and data platform are proprietary.

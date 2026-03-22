@@ -203,10 +203,12 @@ def search(
     Pipe-friendly: auto-outputs JSONL when piped. Use with jq, grep, wc.
 
     Examples:
-        monopigi search "hospital" --format jsonl | jq '.title'
-        monopigi search "procurement" --source ted
+        monopigi search "hospital"
+        monopigi search "δημόσιο νοσοκομείο"
+        monopigi search "IT services" --source ted
+        monopigi search "procurement" --format jsonl | jq '.title'
         monopigi search "Athens" --count
-        monopigi search "hospital" --cache | grep diavgeia
+        monopigi search "hospital" --fields source,title --format csv
     """
     query = _require_arg(ctx, query)
     resolved_source = _resolve_source(source) if source else None
