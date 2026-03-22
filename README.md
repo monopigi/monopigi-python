@@ -4,6 +4,8 @@ Python SDK and CLI for the **Monopigi Greek Government Data API**.
 
 One API. 31M+ government decisions. 18K+ EU procurement notices. 10K+ energy permits. Millions of open data records. Normalized JSON. One bearer token.
 
+**[Documentation](https://monopigi.com/docs)** | **[API Reference](https://monopigi.com/docs/api-reference)** | **[Interactive API Docs](https://api.monopigi.com/docs)** | **[Get API Key](https://monopigi.com/signup)**
+
 ## Installation
 
 ```bash
@@ -566,8 +568,14 @@ Get your API key at [monopigi.com](https://monopigi.com).
 
 ## Links
 
-- Website: [monopigi.com](https://monopigi.com)
-- Contact: info@monopigi.com
+- **Documentation**: [monopigi.com/docs](https://monopigi.com/docs)
+- **Quick Start**: [monopigi.com/docs/quickstart](https://monopigi.com/docs/quickstart)
+- **API Reference**: [monopigi.com/docs/api-reference](https://monopigi.com/docs/api-reference)
+- **SDK Guide**: [monopigi.com/docs/sdk](https://monopigi.com/docs/sdk)
+- **CLI Reference**: [monopigi.com/docs/cli](https://monopigi.com/docs/cli)
+- **Interactive API Docs (Swagger)**: [api.monopigi.com/docs](https://api.monopigi.com/docs)
+- **Website**: [monopigi.com](https://monopigi.com)
+- **Contact**: [info@monopigi.com](mailto:info@monopigi.com)
 
 ---
 

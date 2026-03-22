@@ -31,6 +31,10 @@ monopigi = "monopigi.cli:app"
 
 [project.urls]
 Homepage = "https://monopigi.com"
+Documentation = "https://monopigi.com/docs"
+Repository = "https://github.com/monopigi/monopigi"
+"API Reference" = "https://api.monopigi.com/docs"
+Changelog = "https://github.com/monopigi/monopigi/releases"
 
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
