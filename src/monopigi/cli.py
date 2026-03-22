@@ -507,28 +507,15 @@ def browse(
 
     try:
         with _get_client(cache=True) as client:
-            if not source and not query:
-                # No source specified — show available sources and exit
-                active = [
-                    s for s in client.sources() if s.status == SourceStatus.ACTIVE and s.name not in SOURCE_ALIASES
-                ]
-                console.print("\n[bold]Available sources:[/bold]\n")
-                for s in active:
-                    console.print(f"  [cyan]{s.name:<15}[/cyan] {s.description}")
-                console.print("\n[dim]Usage: monopigi browse <source>[/dim]")
-                console.print("[dim]Example: monopigi browse ted[/dim]\n")
-                raise typer.Exit(0)
-
             if query:
                 resp = client.search(query, source=_resolve_source(source) if source else None, limit=limit)
                 docs = [doc.model_dump() for doc in resp.results]
-            else:
+            elif source:
                 resp = client.documents(_resolve_source(source), limit=limit)
                 docs = [doc.model_dump() for doc in resp.documents]
+            else:
+                docs = []
 
-            if not docs:
-                console.print("[yellow]No documents found.[/yellow]")
-                raise typer.Exit(0)
             browse_documents(docs, source=source)
     except MonopigiError as e:
         console.print(f"[red]Error:[/red] {e}")

@@ -39,14 +39,20 @@ if HAS_TEXTUAL:
 
         def compose(self) -> ComposeResult:
             yield Header()
-            yield Input(placeholder="Type to filter...", id="filter")
+            yield Input(
+                placeholder="Type source name or filter text... (e.g. ted, hospital, diavgeia)",
+                id="filter",
+            )
             yield DataTable()
             yield Footer()
 
         def on_mount(self) -> None:
             table = self.query_one(DataTable)
             table.add_columns("Source", "Title", "Date", "Score")
-            self._populate_table(table, "")
+            if not self._documents:
+                table.add_row("—", "No documents loaded. Type a source name above to search.", "—", "—")
+            else:
+                self._populate_table(table, "")
 
         def on_input_changed(self, event: Input.Changed) -> None:
             table = self.query_one(DataTable)
