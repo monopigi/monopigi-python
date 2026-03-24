@@ -601,15 +601,94 @@ pdf = client.content("diavgeia:ABC123")
 Path("decision.pdf").write_bytes(pdf)
 ```
 
+### Due Diligence Reports — automated entity reports with PDF export
+
+```python
+# Request a report
+report = client.create_report("123456789", identifier_type="afm")
+print(report["id"], report["status"])  # pending
+
+# Check status
+report = client.get_report(report["id"])
+if report["status"] == "completed":
+    print(report["report_json"]["sections"]["executive_summary"])
+
+# Download PDF
+pdf_bytes = client.get_report_pdf(report["id"])
+with open("report.pdf", "wb") as f:
+    f.write(pdf_bytes)
+
+# List past reports
+reports = client.list_reports()
+```
+
+```bash
+monopigi report create 123456789 --type afm
+monopigi report list
+monopigi report get <id> --pdf --output report.pdf
+```
+
+### Procurement Alerts — automated notifications for new tenders
+
+```python
+# Create alert profile
+profile = client.create_alert_profile(
+    name="IT Contracts",
+    filters={"keywords": ["πληροφορική", "software"], "min_value": 50000},
+    channels=["email"],
+)
+
+# List profiles and deliveries
+profiles = client.list_alert_profiles()
+deliveries = client.list_alert_deliveries()
+```
+
+```bash
+monopigi alerts create "IT Contracts" --keywords "software,πληροφορική" --min-value 50000
+monopigi alerts list
+monopigi alerts deliveries
+```
+
+### Compliance Monitoring — continuous entity surveillance
+
+```python
+# Monitor an entity
+entity = client.add_monitored_entity("123456789", identifier_type="afm", label="Acme Corp")
+
+# Check events
+events = client.list_entity_events()
+
+# Get health report
+report = client.entity_health_report(entity["id"])
+```
+
+```bash
+monopigi monitor add 123456789 --type afm --label "Acme Corp"
+monopigi monitor list
+monopigi monitor events
+monopigi monitor report <entity-id>
+```
+
+### Models — list available LLM models for the Ask endpoint
+
+```python
+models = client.models()
+print(models["default"])  # mistralai/mistral-large-2512
+```
+
+```bash
+monopigi models
+```
+
 ---
 
 ## Pricing
 
-| Tier | Price | Daily Queries | Features |
-|------|-------|---------------|----------|
-| Free | EUR 0 | 5 | Sources, stats, metadata |
-| Pro | EUR 299/mo | 5,000 | + Search, full text, export |
-| Enterprise | EUR 999+/mo | 1,000,000 | + RAG, entity resolution, MCP, content download |
+| Tier | Price | Daily Queries | Reports | Alert Profiles | Monitored Entities | MCP Server | Other Features |
+|------|-------|---------------|---------|----------------|-------------------|------------|----------------|
+| Free | EUR 0 | 5 | — | — | — | — | Sources, stats, metadata |
+| Pro | EUR 299/mo | 5,000 | 20/mo | 3 | — | — | + Search, full text, export |
+| Enterprise | EUR 999+/mo | 1,000,000 | Unlimited | Unlimited | EUR 2/entity/mo | Yes | + RAG, entity resolution, MCP, content download |
 
 Get your API key at [monopigi.com](https://monopigi.com).
 

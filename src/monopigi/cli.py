@@ -188,6 +188,52 @@ def sources() -> None:
 
 
 @app.command()
+def models(
+    fmt: OutputFormat = typer.Option(OutputFormat.TABLE, "--format", "-f", help="Output format"),  # noqa: B008
+) -> None:
+    """List available LLM models for the /v1/ask endpoint.
+
+    No authentication required.
+
+    Examples:
+        monopigi models
+        monopigi models --format json
+    """
+    import httpx
+
+    from monopigi.config import DEFAULT_BASE_URL, load_config
+
+    cfg = load_config(config_path=DEFAULT_CONFIG_PATH)
+    base_url = cfg.base_url or DEFAULT_BASE_URL
+    try:
+        resp = httpx.get(f"{base_url}/v1/models", timeout=30.0)
+        resp.raise_for_status()
+        data = resp.json()
+    except httpx.HTTPError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+    fmt = _resolve_format(fmt)
+    model_list = data.get("models", [])
+
+    if fmt in (OutputFormat.JSON, OutputFormat.JSONL):
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+    elif fmt == OutputFormat.CSV:
+        writer = csv.DictWriter(sys.stdout, fieldnames=["id", "default"])
+        writer.writeheader()
+        for m in model_list:
+            writer.writerow({"id": m.get("id", ""), "default": m.get("default", False)})
+    else:
+        table = Table(title="Available LLM Models")
+        table.add_column("Model ID", style="cyan")
+        table.add_column("Default", justify="center")
+        for m in model_list:
+            is_default = "[green]yes[/green]" if m.get("default") else ""
+            table.add_row(m.get("id", ""), is_default)
+        console.print(table)
+
+
+@app.command()
 def search(
     ctx: typer.Context,
     query: str | None = typer.Argument(None, help="Search query"),
@@ -679,6 +725,358 @@ def content(
                 import sys
 
                 sys.stdout.buffer.write(data)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+# -- Report Commands -----------------------------------------------------------
+
+report_app = typer.Typer(help="Manage due diligence reports. Pro tier and above.", no_args_is_help=True)
+app.add_typer(report_app, name="report")
+
+
+@report_app.command("create")
+def report_create(
+    identifier: str = typer.Argument(..., help="Entity identifier (AFM, name, or ADA)"),
+    type: str = typer.Option("afm", "--type", "-t", help="Identifier type: afm, name, ada"),
+) -> None:
+    """Create a new due diligence report."""
+    try:
+        with _get_client() as client:
+            result = client.create_report(identifier, identifier_type=type)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                console.print(f"[green]Report created:[/green] {result.get('id', '')}")
+                console.print(f"  Status: {result.get('status', '')}")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@report_app.command("list")
+def report_list(
+    limit: int = typer.Option(20, "--limit", "-l"),
+) -> None:
+    """List your reports."""
+    try:
+        with _get_client() as client:
+            result = client.list_reports(limit=limit)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                items = result.get("items", [])
+                if not items:
+                    console.print("[dim]No reports found.[/dim]")
+                    return
+                table = Table(title=f"Reports ({result.get('total', 0)} total)")
+                table.add_column("ID", style="cyan", max_width=36)
+                table.add_column("Entity")
+                table.add_column("Type")
+                table.add_column("Status")
+                table.add_column("Created")
+                for r in items:
+                    table.add_row(r["id"], r["entity_identifier"], r["identifier_type"], r["status"], r["created_at"])
+                console.print(table)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@report_app.command("get")
+def report_get(
+    report_id: str = typer.Argument(..., help="Report ID"),
+) -> None:
+    """Get a report by ID."""
+    try:
+        with _get_client() as client:
+            result = client.get_report(report_id)
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@report_app.command("pdf")
+def report_pdf(
+    report_id: str = typer.Argument(..., help="Report ID"),
+    output: str = typer.Option("", "--output", "-o", help="Output file path"),
+) -> None:
+    """Download a report as PDF."""
+    try:
+        with _get_client() as client:
+            data = client.get_report_pdf(report_id)
+            path = output or f"report-{report_id}.pdf"
+            from pathlib import Path
+
+            Path(path).write_bytes(data)
+            console.print(f"[green]Saved to {path}[/green]")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+# -- Alert Commands ------------------------------------------------------------
+
+alert_app = typer.Typer(help="Manage procurement alerts. Enterprise only.", no_args_is_help=True)
+app.add_typer(alert_app, name="alert")
+
+
+@alert_app.command("create")
+def alert_create(
+    name: str = typer.Argument(..., help="Alert profile name"),
+    query: str = typer.Option("", "--query", "-q", help="Search query filter"),
+    source: str = typer.Option("", "--source", "-s", help="Source filter"),
+    email: str = typer.Option("", "--email", help="Notification email"),
+    webhook: str = typer.Option("", "--webhook", help="Webhook URL"),
+) -> None:
+    """Create an alert profile."""
+    try:
+        filters: dict = {}
+        if query:
+            filters["query"] = query
+        if source:
+            filters["source"] = source
+        kwargs: dict = {}
+        if email:
+            kwargs["notify_email"] = email
+        if webhook:
+            kwargs["webhook_url"] = webhook
+        with _get_client() as client:
+            result = client.create_alert_profile(name, filters, **kwargs)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                console.print(f"[green]Alert profile created:[/green] {result.get('id', '')}")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@alert_app.command("list")
+def alert_list(
+    limit: int = typer.Option(20, "--limit", "-l"),
+) -> None:
+    """List alert profiles."""
+    try:
+        with _get_client() as client:
+            result = client.list_alert_profiles(limit=limit)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                items = result.get("items", [])
+                if not items:
+                    console.print("[dim]No alert profiles found.[/dim]")
+                    return
+                table = Table(title=f"Alert Profiles ({result.get('total', 0)} total)")
+                table.add_column("ID", style="cyan", max_width=36)
+                table.add_column("Name")
+                table.add_column("Active")
+                table.add_column("Created")
+                for a in items:
+                    active = "[green]yes[/green]" if a.get("is_active") else "[red]no[/red]"
+                    table.add_row(a["id"], a["name"], active, a.get("created_at", ""))
+                console.print(table)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@alert_app.command("delete")
+def alert_delete(
+    profile_id: str = typer.Argument(..., help="Alert profile ID"),
+) -> None:
+    """Delete an alert profile."""
+    try:
+        with _get_client() as client:
+            result = client.delete_alert_profile(profile_id)
+            console.print(f"[green]Deleted:[/green] {result.get('status', 'ok')}")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@alert_app.command("deliveries")
+def alert_deliveries(
+    profile_id: str = typer.Option("", "--profile", "-p", help="Filter by profile ID"),
+    limit: int = typer.Option(20, "--limit", "-l"),
+) -> None:
+    """List alert deliveries."""
+    try:
+        with _get_client() as client:
+            result = client.list_alert_deliveries(profile_id=profile_id or None, limit=limit)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                items = result.get("items", [])
+                if not items:
+                    console.print("[dim]No deliveries found.[/dim]")
+                    return
+                table = Table(title=f"Alert Deliveries ({result.get('total', 0)} total)")
+                table.add_column("ID", style="cyan", max_width=36)
+                table.add_column("Channel")
+                table.add_column("Status")
+                table.add_column("Delivered")
+                for d in items:
+                    table.add_row(
+                        d["id"], d.get("channel", ""), d.get("delivery_status", ""), d.get("delivered_at", "")
+                    )
+                console.print(table)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+# -- Monitor Commands ----------------------------------------------------------
+
+monitor_app = typer.Typer(help="Compliance monitoring — track entities. Enterprise only.", no_args_is_help=True)
+app.add_typer(monitor_app, name="monitor")
+
+
+@monitor_app.command("add")
+def monitor_add(
+    identifier: str = typer.Argument(..., help="Entity identifier (AFM, name, or ADA code)"),
+    type: str = typer.Option("afm", "--type", "-t", help="Identifier type: afm, name, ada"),
+    label: str = typer.Option("", "--label", "-l", help="Human-readable label"),
+) -> None:
+    """Add an entity to monitor.
+
+    Examples:
+        monopigi monitor add 099369820 --type afm --label "ACME Corp"
+        monopigi monitor add "ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ" --type name
+    """
+    try:
+        with _get_client() as client:
+            result = client.add_monitored_entity(identifier, identifier_type=type, label=label or None)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                console.print(f"[green]Monitoring:[/green] {result.get('entity_identifier', '')}")
+                console.print(f"  ID: {result.get('id', '')}")
+                if result.get("label"):
+                    console.print(f"  Label: {result['label']}")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@monitor_app.command("list")
+def monitor_list(
+    limit: int = typer.Option(20, "--limit", "-l"),
+) -> None:
+    """List monitored entities."""
+    try:
+        with _get_client() as client:
+            result = client.list_monitored_entities(limit=limit)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                items = result.get("items", [])
+                if not items:
+                    console.print("[dim]No monitored entities.[/dim]")
+                    return
+                table = Table(title=f"Monitored Entities ({result.get('total', 0)} total)")
+                table.add_column("ID", style="cyan", max_width=36)
+                table.add_column("Identifier")
+                table.add_column("Type")
+                table.add_column("Label")
+                table.add_column("Last Checked")
+                for e in items:
+                    table.add_row(
+                        e["id"],
+                        e["entity_identifier"],
+                        e["identifier_type"],
+                        e.get("label") or "",
+                        e.get("last_checked_at") or "never",
+                    )
+                console.print(table)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@monitor_app.command("remove")
+def monitor_remove(
+    entity_id: str = typer.Argument(..., help="Monitored entity ID"),
+) -> None:
+    """Remove a monitored entity."""
+    try:
+        with _get_client() as client:
+            result = client.remove_monitored_entity(entity_id)
+            console.print(f"[green]Removed:[/green] {result.get('status', 'deactivated')}")
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@monitor_app.command("events")
+def monitor_events(
+    entity_id: str = typer.Option("", "--entity-id", "-e", help="Filter by entity ID"),
+    type: str = typer.Option("", "--type", "-t", help="Filter by event type"),
+    limit: int = typer.Option(20, "--limit", "-l"),
+) -> None:
+    """List monitoring events.
+
+    Examples:
+        monopigi monitor events
+        monopigi monitor events --entity-id abc123 --type new_decision
+    """
+    try:
+        with _get_client() as client:
+            result = client.list_entity_events(
+                entity_id=entity_id or None,
+                event_type=type or None,
+                limit=limit,
+            )
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                items = result.get("items", [])
+                if not items:
+                    console.print("[dim]No events found.[/dim]")
+                    return
+                table = Table(title=f"Entity Events ({result.get('total', 0)} total)")
+                table.add_column("ID", style="cyan", max_width=36)
+                table.add_column("Type")
+                table.add_column("Document")
+                table.add_column("Summary", max_width=50)
+                table.add_column("Detected")
+                table.add_column("Ack")
+                for ev in items:
+                    ack = "[green]yes[/green]" if ev.get("acknowledged_at") else ""
+                    table.add_row(
+                        ev["id"],
+                        ev["event_type"],
+                        ev.get("document_source_id", ""),
+                        ev.get("summary") or "",
+                        ev.get("detected_at", ""),
+                        ack,
+                    )
+                console.print(table)
+    except MonopigiError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1) from e
+
+
+@monitor_app.command("report")
+def monitor_report(
+    entity_id: str = typer.Argument(..., help="Monitored entity ID"),
+) -> None:
+    """Trigger a health report for a monitored entity.
+
+    Examples:
+        monopigi monitor report abc123-def456
+    """
+    try:
+        with _get_client() as client:
+            result = client.entity_health_report(entity_id)
+            if _is_pipe():
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                console.print(f"[green]Report requested:[/green] {result.get('report_id', '')}")
+                console.print(f"  Entity: {result.get('entity_identifier', '')}")
+                console.print(f"  Status: {result.get('status', '')}")
     except MonopigiError as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1) from e

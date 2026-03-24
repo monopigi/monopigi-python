@@ -236,6 +236,13 @@ class MonopigiClient:
         resp = self._request("GET", "/v1/usage")
         return UsageResponse(**resp.json())
 
+    def models(self) -> dict:
+        """List available LLM models for the /v1/ask endpoint. No auth required."""
+        resp = self._client.get("/v1/models")
+        if resp.status_code >= 400:
+            _handle_error(resp, current_tier=self._tier)
+        return resp.json()
+
     # -- Enterprise features ---------------------------------------------------
 
     def ask(self, question: str, limit: int = 5, model: str | None = None) -> dict:
@@ -260,6 +267,117 @@ class MonopigiClient:
         """Download original document content (PDF/XML/JSON). Enterprise only."""
         resp = self._request("GET", f"/v1/documents/{source_id}/content")
         return resp.content
+
+    # -- Reports (Pro+) --------------------------------------------------------
+
+    def create_report(self, entity_identifier: str, identifier_type: str = "afm") -> dict:
+        """Create a due diligence report request. Pro tier and above."""
+        resp = self._request(
+            "POST", "/v1/reports", json={"entity_identifier": entity_identifier, "identifier_type": identifier_type}
+        )
+        return resp.json()
+
+    def get_report(self, report_id: str) -> dict:
+        """Get a report by ID."""
+        resp = self._request("GET", f"/v1/reports/{report_id}")
+        return resp.json()
+
+    def list_reports(self, limit: int = 20, offset: int = 0) -> dict:
+        """List report requests."""
+        resp = self._request("GET", "/v1/reports", params={"limit": limit, "offset": offset})
+        return resp.json()
+
+    def get_report_pdf(self, report_id: str) -> bytes:
+        """Download PDF for a completed report."""
+        resp = self._request("GET", f"/v1/reports/{report_id}/pdf")
+        return resp.content
+
+    # -- Alerts (Enterprise) ---------------------------------------------------
+
+    def create_alert_profile(
+        self, name: str, filters: dict, channels: list[str] | None = None, **kwargs: object
+    ) -> dict:
+        """Create an alert profile. Enterprise only."""
+        payload: dict = {"name": name, "filters": filters}
+        if channels:
+            payload["channels"] = channels
+        payload.update(kwargs)
+        resp = self._request("POST", "/v1/alerts/profiles", json=payload)
+        return resp.json()
+
+    def list_alert_profiles(self, limit: int = 20, offset: int = 0) -> dict:
+        """List alert profiles."""
+        resp = self._request("GET", "/v1/alerts/profiles", params={"limit": limit, "offset": offset})
+        return resp.json()
+
+    def update_alert_profile(self, profile_id: str, **kwargs: object) -> dict:
+        """Update an alert profile."""
+        resp = self._request("PUT", f"/v1/alerts/profiles/{profile_id}", json=kwargs)
+        return resp.json()
+
+    def delete_alert_profile(self, profile_id: str) -> dict:
+        """Delete an alert profile."""
+        resp = self._request("DELETE", f"/v1/alerts/profiles/{profile_id}")
+        return resp.json()
+
+    def list_alert_deliveries(self, profile_id: str | None = None, limit: int = 20, offset: int = 0) -> dict:
+        """List alert deliveries."""
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
+        if profile_id:
+            params["profile_id"] = profile_id
+        resp = self._request("GET", "/v1/alerts/deliveries", params=params)
+        return resp.json()
+
+    # -- Compliance monitoring (Enterprise) ------------------------------------
+
+    def add_monitored_entity(
+        self, entity_identifier: str, identifier_type: str = "afm", label: str | None = None
+    ) -> dict:
+        """Add an entity to monitor. Enterprise only."""
+        payload: dict = {"entity_identifier": entity_identifier, "identifier_type": identifier_type}
+        if label:
+            payload["label"] = label
+        resp = self._request("POST", "/v1/monitor/entities", json=payload)
+        return resp.json()
+
+    def list_monitored_entities(self, limit: int = 20, offset: int = 0) -> dict:
+        """List monitored entities."""
+        resp = self._request("GET", "/v1/monitor/entities", params={"limit": limit, "offset": offset})
+        return resp.json()
+
+    def remove_monitored_entity(self, entity_id: str) -> dict:
+        """Remove (deactivate) a monitored entity."""
+        resp = self._request("DELETE", f"/v1/monitor/entities/{entity_id}")
+        return resp.json()
+
+    def list_entity_events(
+        self,
+        entity_id: str | None = None,
+        event_type: str | None = None,
+        since: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> dict:
+        """List events for monitored entities."""
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
+        if entity_id:
+            params["entity_id"] = entity_id
+        if event_type:
+            params["event_type"] = event_type
+        if since:
+            params["since"] = since
+        resp = self._request("GET", "/v1/monitor/events", params=params)
+        return resp.json()
+
+    def acknowledge_event(self, event_id: str) -> dict:
+        """Acknowledge a monitoring event."""
+        resp = self._request("POST", f"/v1/monitor/events/{event_id}/acknowledge")
+        return resp.json()
+
+    def entity_health_report(self, entity_id: str) -> dict:
+        """Trigger a health report for a monitored entity."""
+        resp = self._request("GET", f"/v1/monitor/entities/{entity_id}/report")
+        return resp.json()
 
     # -- Pagination iterators --------------------------------------------------
 
@@ -492,6 +610,13 @@ class AsyncMonopigiClient:
         resp = await self._request("GET", "/v1/usage")
         return UsageResponse(**resp.json())
 
+    async def models(self) -> dict:
+        """List available LLM models for the /v1/ask endpoint. No auth required."""
+        resp = await self._client.get("/v1/models")
+        if resp.status_code >= 400:
+            _handle_error(resp, current_tier=self._tier)
+        return resp.json()
+
     # -- Enterprise features ---------------------------------------------------
 
     async def ask(self, question: str, limit: int = 5, model: str | None = None) -> dict:
@@ -516,6 +641,117 @@ class AsyncMonopigiClient:
         """Download original document content (PDF/XML/JSON). Enterprise only."""
         resp = await self._request("GET", f"/v1/documents/{source_id}/content")
         return resp.content
+
+    # -- Reports (Pro+) --------------------------------------------------------
+
+    async def create_report(self, entity_identifier: str, identifier_type: str = "afm") -> dict:
+        """Create a due diligence report request. Pro tier and above."""
+        resp = await self._request(
+            "POST", "/v1/reports", json={"entity_identifier": entity_identifier, "identifier_type": identifier_type}
+        )
+        return resp.json()
+
+    async def get_report(self, report_id: str) -> dict:
+        """Get a report by ID."""
+        resp = await self._request("GET", f"/v1/reports/{report_id}")
+        return resp.json()
+
+    async def list_reports(self, limit: int = 20, offset: int = 0) -> dict:
+        """List report requests."""
+        resp = await self._request("GET", "/v1/reports", params={"limit": limit, "offset": offset})
+        return resp.json()
+
+    async def get_report_pdf(self, report_id: str) -> bytes:
+        """Download PDF for a completed report."""
+        resp = await self._request("GET", f"/v1/reports/{report_id}/pdf")
+        return resp.content
+
+    # -- Alerts (Enterprise) ---------------------------------------------------
+
+    async def create_alert_profile(
+        self, name: str, filters: dict, channels: list[str] | None = None, **kwargs: object
+    ) -> dict:
+        """Create an alert profile. Enterprise only."""
+        payload: dict = {"name": name, "filters": filters}
+        if channels:
+            payload["channels"] = channels
+        payload.update(kwargs)
+        resp = await self._request("POST", "/v1/alerts/profiles", json=payload)
+        return resp.json()
+
+    async def list_alert_profiles(self, limit: int = 20, offset: int = 0) -> dict:
+        """List alert profiles."""
+        resp = await self._request("GET", "/v1/alerts/profiles", params={"limit": limit, "offset": offset})
+        return resp.json()
+
+    async def update_alert_profile(self, profile_id: str, **kwargs: object) -> dict:
+        """Update an alert profile."""
+        resp = await self._request("PUT", f"/v1/alerts/profiles/{profile_id}", json=kwargs)
+        return resp.json()
+
+    async def delete_alert_profile(self, profile_id: str) -> dict:
+        """Delete an alert profile."""
+        resp = await self._request("DELETE", f"/v1/alerts/profiles/{profile_id}")
+        return resp.json()
+
+    async def list_alert_deliveries(self, profile_id: str | None = None, limit: int = 20, offset: int = 0) -> dict:
+        """List alert deliveries."""
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
+        if profile_id:
+            params["profile_id"] = profile_id
+        resp = await self._request("GET", "/v1/alerts/deliveries", params=params)
+        return resp.json()
+
+    # -- Compliance monitoring (Enterprise) ------------------------------------
+
+    async def add_monitored_entity(
+        self, entity_identifier: str, identifier_type: str = "afm", label: str | None = None
+    ) -> dict:
+        """Add an entity to monitor. Enterprise only."""
+        payload: dict = {"entity_identifier": entity_identifier, "identifier_type": identifier_type}
+        if label:
+            payload["label"] = label
+        resp = await self._request("POST", "/v1/monitor/entities", json=payload)
+        return resp.json()
+
+    async def list_monitored_entities(self, limit: int = 20, offset: int = 0) -> dict:
+        """List monitored entities."""
+        resp = await self._request("GET", "/v1/monitor/entities", params={"limit": limit, "offset": offset})
+        return resp.json()
+
+    async def remove_monitored_entity(self, entity_id: str) -> dict:
+        """Remove (deactivate) a monitored entity."""
+        resp = await self._request("DELETE", f"/v1/monitor/entities/{entity_id}")
+        return resp.json()
+
+    async def list_entity_events(
+        self,
+        entity_id: str | None = None,
+        event_type: str | None = None,
+        since: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> dict:
+        """List events for monitored entities."""
+        params: dict[str, str | int] = {"limit": limit, "offset": offset}
+        if entity_id:
+            params["entity_id"] = entity_id
+        if event_type:
+            params["event_type"] = event_type
+        if since:
+            params["since"] = since
+        resp = await self._request("GET", "/v1/monitor/events", params=params)
+        return resp.json()
+
+    async def acknowledge_event(self, event_id: str) -> dict:
+        """Acknowledge a monitoring event."""
+        resp = await self._request("POST", f"/v1/monitor/events/{event_id}/acknowledge")
+        return resp.json()
+
+    async def entity_health_report(self, entity_id: str) -> dict:
+        """Trigger a health report for a monitored entity."""
+        resp = await self._request("GET", f"/v1/monitor/entities/{entity_id}/report")
+        return resp.json()
 
     # -- Pagination iterators --------------------------------------------------
 
