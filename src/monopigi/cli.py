@@ -826,18 +826,30 @@ app.add_typer(alert_app, name="alert")
 @alert_app.command("create")
 def alert_create(
     name: str = typer.Argument(..., help="Alert profile name"),
-    query: str = typer.Option("", "--query", "-q", help="Search query filter"),
-    source: str = typer.Option("", "--source", "-s", help="Source filter"),
+    keywords: str = typer.Option("", "--keywords", "-k", help="Comma-separated keywords filter"),
+    sources: str = typer.Option("", "--sources", "-s", help="Comma-separated sources filter"),
+    sectors: str = typer.Option("", "--sectors", help="Comma-separated sectors filter"),
+    regions: str = typer.Option("", "--regions", help="Comma-separated regions filter"),
+    min_value: float | None = typer.Option(None, "--min-value", help="Minimum contract value"),
+    max_value: float | None = typer.Option(None, "--max-value", help="Maximum contract value"),
     email: str = typer.Option("", "--email", help="Notification email"),
     webhook: str = typer.Option("", "--webhook", help="Webhook URL"),
 ) -> None:
     """Create an alert profile."""
     try:
         filters: dict = {}
-        if query:
-            filters["query"] = query
-        if source:
-            filters["source"] = source
+        if keywords:
+            filters["keywords"] = [kw.strip() for kw in keywords.split(",")]
+        if sources:
+            filters["sources"] = [s.strip() for s in sources.split(",")]
+        if sectors:
+            filters["sectors"] = [s.strip() for s in sectors.split(",")]
+        if regions:
+            filters["regions"] = [r.strip() for r in regions.split(",")]
+        if min_value is not None:
+            filters["min_value"] = min_value
+        if max_value is not None:
+            filters["max_value"] = max_value
         kwargs: dict = {}
         if email:
             kwargs["notify_email"] = email
