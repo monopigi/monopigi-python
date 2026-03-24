@@ -75,7 +75,7 @@ def _handle_error(resp: httpx.Response, *, current_tier: str | None = None) -> N
     if resp.status_code == 404:
         try:
             detail = resp.json().get("detail", "Not found") if resp.content else "Not found"
-        except (ValueError, KeyError):
+        except ValueError, KeyError:
             detail = "Not found"
         raise NotFoundError(detail)
     if resp.status_code >= 400:
@@ -101,7 +101,7 @@ def _parse_quota_headers(headers: httpx.Headers) -> QuotaInfo | None:
     if limit is not None and remaining is not None and reset is not None:
         try:
             return QuotaInfo(limit=int(limit), remaining=int(remaining), reset=reset)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return None
     return None
 
