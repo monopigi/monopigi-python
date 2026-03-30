@@ -59,11 +59,13 @@ monopigi search "hospital procurement"
 | Source | What it contains | Volume |
 |--------|-----------------|--------|
 | **Diavgeia** | Government spending decisions, contracts, financial data | 31M+ decisions |
+| **KIMDIS** | Greek public procurement — contracts, auctions, payments | 1M+ records/year |
 | **TED (EU)** | EU public procurement notices for Greece (EL/EN) | 18K+ notices |
-| **RAE Energy** | Energy permits — wind, solar, hydro with GeoJSON | 10K+ permits |
+| **RAE Energy** | Energy permits — wind, solar, hydro with GeoJSON | 15K+ permits |
 | **data.gov.gr** | National open data — health, economy, crime, energy | 84 datasets, millions of records |
 | **ELSTAT** | Statistical time series — GDP, unemployment, trade | 28 indicators, decades of data |
-| **Mitos** | Government org registry — names, addresses, VAT | 2,886 orgs |
+| **Mitos** | Government orgs + services registry — names, addresses, VAT | 2,886 orgs + 4,264 services |
+| **Geodata** | Greek geospatial data — environmental, urban, cadastral (OGC WFS) | 193 layers, 500K+ features |
 
 ---
 
@@ -131,8 +133,15 @@ permits = client.rae.permits()
 # data.gov.gr national data
 data = client.data_gov_gr.datasets()
 
-# Mitos government organizations
+# Mitos government organizations + services
 orgs = client.mitos.organizations()
+services = client.mitos.services()
+
+# KIMDIS Greek public procurement
+contracts = client.kimdis.contracts(limit=100, since="2026-01-01")
+
+# Geodata — Greek geospatial layers
+layers = client.geodata.layers()
 ```
 
 ### Auto-Pagination
