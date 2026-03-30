@@ -30,12 +30,16 @@ if TYPE_CHECKING:
         AsyncDataGovGrSource,
         AsyncDiavgeiaSource,
         AsyncElstatSource,
+        AsyncGeodataSource,
+        AsyncKimdisSource,
         AsyncMitosSource,
         AsyncRaeSource,
         AsyncTedSource,
         DataGovGrSource,
         DiavgeiaSource,
         ElstatSource,
+        GeodataSource,
+        KimdisSource,
         MitosSource,
         RaeSource,
         TedSource,
@@ -488,6 +492,18 @@ class MonopigiClient:
 
         return MitosSource(self)
 
+    @property
+    def kimdis(self) -> KimdisSource:
+        from monopigi.sources import KimdisSource
+
+        return KimdisSource(self)
+
+    @property
+    def geodata(self) -> GeodataSource:
+        from monopigi.sources import GeodataSource
+
+        return GeodataSource(self)
+
     def close(self) -> None:
         self._client.close()
 
@@ -816,6 +832,18 @@ class AsyncMonopigiClient:
         from monopigi.sources import AsyncMitosSource
 
         return AsyncMitosSource(self)
+
+    @property
+    def kimdis(self) -> AsyncKimdisSource:
+        from monopigi.sources import AsyncKimdisSource
+
+        return AsyncKimdisSource(self)
+
+    @property
+    def geodata(self) -> AsyncGeodataSource:
+        from monopigi.sources import AsyncGeodataSource
+
+        return AsyncGeodataSource(self)
 
     async def close(self) -> None:
         await self._client.aclose()

@@ -67,6 +67,29 @@ class MitosSource:
     def organizations(self, limit: int = 100) -> DocumentsResponse:
         return self._client.documents("mitos", limit=limit)
 
+    def services(self, limit: int = 100) -> DocumentsResponse:
+        return self._client.documents("mitos", limit=limit)
+
+
+class KimdisSource:
+    """Typed client for KIMDIS Greek public procurement data."""
+
+    def __init__(self, client: MonopigiClient) -> None:
+        self._client = client
+
+    def contracts(self, limit: int = 100, since: str | None = None) -> DocumentsResponse:
+        return self._client.documents("kimdis", limit=limit, since=since)
+
+
+class GeodataSource:
+    """Typed client for Greek geospatial data (OGC WFS + ESRI)."""
+
+    def __init__(self, client: MonopigiClient) -> None:
+        self._client = client
+
+    def layers(self, limit: int = 100) -> DocumentsResponse:
+        return self._client.documents("geodata", limit=limit)
+
 
 # -- Async source clients ------------------------------------------------------
 
@@ -124,3 +147,26 @@ class AsyncMitosSource:
 
     async def organizations(self, limit: int = 100) -> DocumentsResponse:
         return await self._client.documents("mitos", limit=limit)
+
+    async def services(self, limit: int = 100) -> DocumentsResponse:
+        return await self._client.documents("mitos", limit=limit)
+
+
+class AsyncKimdisSource:
+    """Async typed client for KIMDIS Greek public procurement data."""
+
+    def __init__(self, client: AsyncMonopigiClient) -> None:
+        self._client = client
+
+    async def contracts(self, limit: int = 100, since: str | None = None) -> DocumentsResponse:
+        return await self._client.documents("kimdis", limit=limit, since=since)
+
+
+class AsyncGeodataSource:
+    """Async typed client for Greek geospatial data."""
+
+    def __init__(self, client: AsyncMonopigiClient) -> None:
+        self._client = client
+
+    async def layers(self, limit: int = 100) -> DocumentsResponse:
+        return await self._client.documents("geodata", limit=limit)
