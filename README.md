@@ -2,7 +2,7 @@
 
 Python SDK and CLI for the **Monopigi Greek Government Data API**.
 
-One API. 31M+ government decisions. 18K+ EU procurement notices. 10K+ energy permits. Millions of open data records. Normalized JSON. One bearer token.
+One API. 31M+ government decisions. 200K+ EU procurement notices. 10K+ energy permits. Millions of open data records. Normalized JSON. One bearer token.
 
 **[Documentation](https://monopigi.com/docs)** | **[API Reference](https://monopigi.com/docs/api-reference)** | **[Interactive API Docs](https://api.monopigi.com/docs)** | **[Get API Key](https://monopigi.com/signup)**
 
@@ -31,10 +31,10 @@ Requires Python 3.12+.
 ### Python SDK
 
 ```python
-from monopigi_sdk import MonopigiClient
+from monopigi import MonopigiClient
 
 with MonopigiClient("mp_live_your_token_here") as client:
-    # Search across all 6 data sources
+    # Search across all 8 data sources
     results = client.search("hospital procurement", limit=10)
     for doc in results.results:
         print(f"{doc.source}: {doc.title}")
@@ -60,7 +60,7 @@ monopigi search "hospital procurement"
 |--------|-----------------|--------|
 | **Diavgeia** | Government spending decisions, contracts, financial data | 31M+ decisions |
 | **KIMDIS** | Greek public procurement — contracts, auctions, payments | 1M+ records/year |
-| **TED (EU)** | EU public procurement notices for Greece (EL/EN) | 18K+ notices |
+| **TED (EU)** | EU public procurement notices for Greece (EL/EN) | 200K+ notices |
 | **RAE Energy** | Energy permits — wind, solar, hydro with GeoJSON | 15K+ permits |
 | **data.gov.gr** | National open data — health, economy, crime, energy | 84 datasets, millions of records |
 | **ELSTAT** | Statistical time series — GDP, unemployment, trade | 28 indicators, decades of data |
@@ -74,7 +74,7 @@ monopigi search "hospital procurement"
 ### Client
 
 ```python
-from monopigi_sdk import MonopigiClient, AsyncMonopigiClient
+from monopigi import MonopigiClient, AsyncMonopigiClient
 
 # Sync client
 client = MonopigiClient(token="mp_live_...", base_url="https://api.monopigi.com")
@@ -217,7 +217,7 @@ client = MonopigiClient("mp_live_...", max_retries=3)
 ### Error Handling
 
 ```python
-from monopigi_sdk import MonopigiClient, AuthError, RateLimitError, NotFoundError, MonopigiError
+from monopigi import MonopigiClient, AuthError, RateLimitError, NotFoundError, MonopigiError
 
 try:
     client = MonopigiClient("invalid_token")
@@ -237,7 +237,7 @@ except MonopigiError:
 All responses are typed Pydantic models with full autocomplete:
 
 ```python
-from monopigi_sdk.models import (
+from monopigi.models import (
     Source,          # name, label, status, description
     Document,        # source_id, source, title, doc_type, published_at, quality_score, ...
     SearchResponse,  # query, results, total, limit, offset
