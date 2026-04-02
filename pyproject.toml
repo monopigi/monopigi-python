@@ -36,7 +36,7 @@ monopigi = "monopigi.cli:app"
 [project.urls]
 Homepage = "https://monopigi.com"
 Documentation = "https://monopigi.com/docs"
-Repository = "https://github.com/monopigi/monopigi"
+Repository = "https://monopigi.com/docs"
 "API Reference" = "https://api.monopigi.com/docs"
 Changelog = "https://github.com/monopigi/monopigi/releases"
 
