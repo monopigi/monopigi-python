@@ -696,8 +696,8 @@ monopigi models
 | Tier | Price | Daily Queries | Reports | Alert Profiles | Monitored Entities | MCP Server | Other Features |
 |------|-------|---------------|---------|----------------|-------------------|------------|----------------|
 | Free | EUR 0 | 5 | — | — | — | — | Sources, stats, metadata |
-| Pro | EUR 299/mo | 5,000 | 20/mo | 3 | — | — | + Search, full text, export |
-| Enterprise | EUR 999+/mo | 1,000,000 | Unlimited | Unlimited | EUR 2/entity/mo | Yes | + RAG, entity resolution, MCP, content download |
+| Pro | EUR 299/mo | 100 | 20/mo | 3 | — | — | + Search, full text, export |
+| Enterprise | EUR 999+/mo | 1,000 | Unlimited | Unlimited | EUR 2/entity/mo | Yes | + RAG, entity resolution, MCP, content download |
 
 Get your API key at [monopigi.com](https://monopigi.com).
 
