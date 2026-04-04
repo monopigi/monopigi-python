@@ -15,10 +15,7 @@ pip install monopigi
 # With Polars DataFrame support
 pip install monopigi[df]
 
-# With interactive TUI browser
-pip install monopigi[fuzzy]
-
-# Everything
+# Everything (includes Polars DataFrames)
 pip install monopigi[all]
 ```
 
@@ -473,7 +470,7 @@ monopigi export ted sample.json --limit 100
 
 ### Interactive Browser
 
-Requires `monopigi[fuzzy]`:
+Interactive TUI browser (included by default):
 
 ```bash
 # Browse documents from a source
