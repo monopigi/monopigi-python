@@ -22,7 +22,7 @@ pip install monopigi[fuzzy]
 pip install monopigi[all]
 ```
 
-Requires Python 3.12+.
+Requires Python 3.10+.
 
 ---
 
