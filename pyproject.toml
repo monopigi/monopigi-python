@@ -1,6 +1,6 @@
 [project]
 name = "monopigi"
-version = "0.1.20"
+version = "0.1.21"
 description = "Python SDK and CLI for the Monopigi Greek Government Data API"
 requires-python = ">=3.10"
 license = "Apache-2.0"
