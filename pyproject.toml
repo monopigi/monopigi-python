@@ -2,7 +2,7 @@
 name = "monopigi"
 version = "0.1.23"
 description = "Python SDK and CLI for the Monopigi Greek Government Data API"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "Apache-2.0"
 readme = "README.md"
 authors = [{name = "Monopigi", email = "info@monopigi.com"}]
@@ -11,7 +11,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -24,7 +23,7 @@ dependencies = [
     "typer>=0.15",
     "rich>=13.0",
     "textual>=3.0",
-    "tomli>=2.0; python_version < '3.11'",
+
 ]
 
 [project.optional-dependencies]

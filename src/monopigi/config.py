@@ -3,10 +3,7 @@
 from pathlib import Path
 from typing import NamedTuple
 
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore[no-redef]
+import tomllib
 
 DEFAULT_CONFIG_PATH = Path.home() / ".monopigi" / "config.toml"
 DEFAULT_BASE_URL = "https://api.monopigi.com"
