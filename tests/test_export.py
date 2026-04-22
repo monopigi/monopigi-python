@@ -5,8 +5,9 @@ import json
 from pathlib import Path
 
 import pytest
-from monopigi.client import MonopigiClient
 from pytest_httpx import HTTPXMock
+
+from monopigi.client import MonopigiClient
 
 
 def _doc(source_id: str) -> dict:

@@ -1,9 +1,10 @@
 """Tests for source-specific typed clients."""
 
+from pytest_httpx import HTTPXMock
+
 from monopigi.client import MonopigiClient
 from monopigi.models import DocumentsResponse
 from monopigi.sources import DiavgeiaSource, TedSource
-from pytest_httpx import HTTPXMock
 
 
 def _docs_response(source: str) -> dict:

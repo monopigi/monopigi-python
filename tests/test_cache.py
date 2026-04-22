@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from pytest_httpx import HTTPXMock
+
 from monopigi.cache import DiskCache
 from monopigi.client import MonopigiClient
-from pytest_httpx import HTTPXMock
 
 
 @pytest.fixture

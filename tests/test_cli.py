@@ -3,9 +3,10 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from typer.testing import CliRunner
+
 from monopigi.cli import _filter_fields, app
 from monopigi.models import OutputFormat
-from typer.testing import CliRunner
 
 runner = CliRunner()
 

@@ -1,9 +1,10 @@
 """Tests for Monopigi API client."""
 
 import pytest
+from pytest_httpx import HTTPXMock
+
 from monopigi.client import AsyncMonopigiClient, MonopigiClient
 from monopigi.exceptions import AuthError, NotFoundError, RateLimitError
-from pytest_httpx import HTTPXMock
 
 
 @pytest.fixture

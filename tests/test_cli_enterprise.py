@@ -6,8 +6,9 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from monopigi.cli import app
 from typer.testing import CliRunner
+
+from monopigi.cli import app
 
 runner = CliRunner()
 

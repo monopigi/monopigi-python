@@ -1,8 +1,9 @@
 """Token and config storage in ~/.monopigi/config.toml."""
 
-import tomllib
 from pathlib import Path
 from typing import NamedTuple
+
+import tomllib
 
 DEFAULT_CONFIG_PATH = Path.home() / ".monopigi" / "config.toml"
 DEFAULT_BASE_URL = "https://api.monopigi.com"

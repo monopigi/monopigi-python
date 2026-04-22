@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from monopigi.client import MonopigiClient
 from pytest_httpx import HTTPXMock
+
+from monopigi.client import MonopigiClient
 
 BASE = "https://api.monopigi.com"
 
