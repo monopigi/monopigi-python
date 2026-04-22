@@ -24,6 +24,7 @@ dependencies = [
     "typer>=0.15",
     "rich>=13.0",
     "textual>=3.0",
+    "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
@@ -48,6 +49,7 @@ dev = [
     "pytest-cov>=6.0",
     "pytest-httpx>=0.34",
     "ruff>=0.11",
+    "polars>=1.0",
 ]
 
 [tool.ruff]
