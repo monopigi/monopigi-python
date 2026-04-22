@@ -36,9 +36,18 @@ monopigi = "monopigi.cli:app"
 [project.urls]
 Homepage = "https://monopigi.com"
 Documentation = "https://monopigi.com/docs"
-Repository = "https://monopigi.com/docs"
+Repository = "https://github.com/monopigi/monopigi-python"
+"Bug Tracker" = "https://github.com/monopigi/monopigi-python/issues"
 "API Reference" = "https://api.monopigi.com/docs"
-Changelog = "https://github.com/monopigi/monopigi/releases"
+Changelog = "https://github.com/monopigi/monopigi-python/releases"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-asyncio>=1.0",
+    "pytest-cov>=6.0",
+    "pytest-httpx>=0.34",
+]
 
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]

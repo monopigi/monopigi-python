@@ -4,7 +4,7 @@ from monopigi.client import AsyncMonopigiClient, MonopigiClient
 from monopigi.exceptions import AuthError, MonopigiError, NotFoundError, RateLimitError, TierError
 from monopigi.models import Country, Document, OutputFormat, QuotaInfo, Source, SourceStatus, Tier
 
-__version__ = "0.1.20"
+__version__ = "0.1.22"
 __all__ = [
     "AsyncMonopigiClient",
     "AuthError",
