@@ -47,8 +47,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
+          NOTES=$(printf 'PyPI: https://pypi.org/project/monopigi/%s/\n\nInstall: `pip install monopigi==%s`' "$VERSION" "$VERSION")
           gh release create "${{ github.ref_name }}" dist/* \
             --title "monopigi ${{ github.ref_name }}" \
-            --notes "PyPI: https://pypi.org/project/monopigi/$VERSION/
-
-Install: \`pip install monopigi==$VERSION\`"
+            --notes "$NOTES"
